@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SecondCloud</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/drive.css') }}">
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+</head>
+
+<body>
+  <main class="main-drive-window">
+
+    <header class="topbar">
+      <div class="topbar-left-side">
+        <button class="topbat-menu-button" id="left-sidebar-toggle">
+          <span class="material-symbols-rounded"> notes </span>
+        </button>
+        <div class="drive-name" onclick="window.location.href='/'">
+          <h1>MyCloud</h1>
+          <p>by ms3</p>
+        </div>
+      </div>
+      <nav class="topbar-right-side">
+        <button class="topbat-menu-button">
+          <span class="material-symbols-rounded"> search </span>
+        </button>
+        <button class="topbat-menu-button" id="theme-toggle" type="button" aria-label="Switch to dark theme">
+          <span id="theme-icon" class="material-symbols-rounded"> dark_mode </span>
+        </button>
+
+        <div id="connection-message" class="connection-message" role="status" aria-live="polite" hidden></div>
+
+        <!-- Action Required Button -->
+        <button type="button" id="action-required-btn" class="action-required-btn">
+          <span class="material-symbols-rounded">policy_alert</span>
+          Action Required
+        </button>
+
+        <div class="account-container">
+          <button class="topbat-menu-button" id="account-button">
+            <span class="material-symbols-rounded"> face </span>
+          </button>
+
+          <div class="account-menu" id="account-menu">
+            <button class="account-menu-item">
+              <span class="material-symbols-rounded"> account_circle </span>
+              <span class="topbar-right" id="welcome"> Hi, User </span>
+            </button>
+
+            <button class="account-menu-item" id="logout-button">
+              <span class="material-symbols-rounded"> logout </span> Logout </button>
+          </div>
+        </div>
+
+        <button class="topbat-menu-button" id="right-sidebar-toggle">
+          <span class="material-symbols-rounded"> apps </span>
+        </button>
+      </nav>
+    </header>
+
+    <div class="container">
+
+      <div class="left-sidebar">
+        <nav>
+          <button class="sidebar-menu-button">
+            <span class="material-symbols-rounded"> home </span>
+            <span class="label">Home</span>
+          </button>
+
+          <button class="sidebar-menu-button">
+            <span class="material-symbols-rounded"> camera </span>
+            <span class="label">Gallery</span>
+          </button>
+
+          <button class="sidebar-menu-button">
+            <span class="material-symbols-rounded"> files </span>
+            <span class="label">My Drive</span>
+          </button>
+
+          <button class="sidebar-menu-button">
+            <span class="material-symbols-rounded"> docs </span>
+            <span class="label">Documents</span>
+          </button>
+
+          <button class="sidebar-menu-button">
+            <span class="material-symbols-rounded"> photo_library </span>
+            <span class="label">Images</span>
+          </button>
+
+          <button class="sidebar-menu-button">
+            <span class="material-symbols-rounded"> animated_images </span>
+            <span class="label">Videos</span>
+          </button>
+
+          <button class="sidebar-menu-button">
+            <span class="material-symbols-rounded"> delete </span>
+            <span class="label">Trash</span>
+          </button>
+        </nav>
+
+        <nav>
+          <div class="message-container" id="message-container"></div>
+
+          <button class="sidebar-menu-button" id="notifications-button">
+            <span class="material-symbols-rounded"> notifications </span>
+          </button>
+
+          <button class="sidebar-menu-button">
+            <span class="material-symbols-rounded"> help </span>
+            <span class="label">Help</span>
+          </button>
+
+          <button class="sidebar-menu-button">
+            <span class="material-symbols-rounded"> home_storage </span>
+            <span class="label">Storage</span>
+          </button>
+
+          <button class="sidebar-menu-button">
+            <span class="material-symbols-rounded"> settings </span>
+            <span class="label">Settings</span>
+          </button>
+        </nav>
+      </div>
+
+      <section class="mydrive">
+        <div class="mydrive-tools">
+          <div class="breadcrumb">
+
+            <button class="breadcrumb-back-button" id="back-button">
+              <span class="material-symbols-rounded"> arrow_back_ios </span>
+            </button>
+
+            <span class="breadcrumb-label">|</span>
+
+            <nav class="drive-path" id="breadcrumb">
+
+              <!-- breadcrumb -->
+
+            </nav>
+
+          </div>
+          <div class="mydrive-action-tools-button">
+            <button class="new-bt" id="add-button">
+              <span class="material-symbols-rounded">add</span>
+              <span class="addbt-lable">Add</span>
+            </button>
+
+            <div class="add-menu" id="add-menu">
+
+              <button type="button" class="add-menu-item" id="New-folder-button">
+
+                <span class="material-symbols-rounded">create_new_folder</span>
+                New Folder
+
+              </button>
+
+              <button type="button" class="add-menu-item" id="upload-file-button">
+
+                <span class="material-symbols-rounded">upload</span>
+                Upload File
+
+              </button>
+              <input type="file" id="file-input" hidden>
+
+            </div>
+          </div>
+        </div>
+
+        <div class="sorting">
+          <h1> Folders & Files </h1>
+        </div>
+
+        <div class="mydrive-container">
+
+          <!-- FOLDERS -->
+          <div class="folder-list" id="folder-list">
+
+
+
+          </div>
+          <!-- FILES -->
+          <div class="file-list" id="file-list">
+
+
+
+          </div>
+          <!-- TEST CONTENT --> <!-- Remove this later -->
+
+          <div id="freespace" style="height: 700px;"></div>
+        </div>
+      </section>
+
+      <div class="right-sidebar">
+        <nav>
+          <button class="right-sidebar-menu-button">
+            <span class="material-symbols-rounded"> backup </span>
+          </button>
+
+          <button class="right-sidebar-menu-button">
+            <span class="material-symbols-rounded"> folder_zip </span>
+          </button>
+
+          <button class="right-sidebar-menu-button">
+            <span class="material-symbols-rounded"> note_add </span>
+          </button>
+
+          <button class="right-sidebar-menu-button">
+            <span class="material-symbols-rounded"> task </span>
+          </button>
+
+          <button class="right-sidebar-menu-button">
+            <span class="material-symbols-rounded"> add </span>
+          </button>
+        </nav>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- ========================= Create Popup ========================== -->
+
+  <div class="modal-overlay" id="create-folder-modal">
+
+    <div class="modal">
+
+      <div class="modal-header">
+        <h2 id="folder-modal-title">Create Folder</h2>
+
+        <button type="button" id="close-folder-modal">
+          ×
+        </button>
+      </div>
+
+      <form id="create-folder-form">
+
+        <div class="form-group">
+          <label for="folder-name">Folder name</label>
+
+          <input type="text" id="folder-name" name="folder_name" placeholder="Enter folder name" autocomplete="off"
+            required>
+        </div>
+
+        <div class="modal-actions">
+
+          <button type="button" id="cancel-folder-button">
+            Cancel
+          </button>
+
+          <button type="submit" id="submit-folder-name">
+            Create
+          </button>
+
+        </div>
+
+      </form>
+
+    </div>
+
+  </div>
+
+  <!-- ========================= Confirm Popup ========================== -->
+
+  <div class="modal-overlay" id="delete-confirm-modal">
+
+    <div class="modal">
+
+      <div class="modal-header">
+
+        <h2>Delete Folder</h2>
+
+        <button type="button" id="close-delete-modal">
+          ×
+        </button>
+
+      </div>
+
+      <div class="delete-confirm-content">
+
+        <p id="delete-confirm-message">
+          Are you sure you want to delete this folder?
+        </p>
+
+        <p class="delete-warning">
+          Everything inside this folder will also be deleted.
+        </p>
+
+      </div>
+
+      <div class="modal-actions">
+
+        <button type="button" id="cancel-delete-button">
+          Cancel
+        </button>
+
+        <button type="button" id="confirm-delete-button">
+          Delete
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ========================= FOLDER CONTEXT MENU ========================== -->
+
+  <div id="folder-context-menu" class="context-menu">
+
+    <button id="open-folder">
+      <span class="material-symbols-rounded"> folder_open </span>
+      Open
+    </button>
+
+    <button id="rename-folder">
+      <span class="material-symbols-rounded"> drive_file_rename </span>
+      Rename
+    </button>
+
+    <button id="copy-folder">
+      <span class="material-symbols-rounded"> folder_copy </span>
+      Copy
+    </button>
+
+    <button id="move-folder">
+      <span class="material-symbols-rounded"> drive_file_move </span>
+      Move
+    </button>
+
+    <div class="context-divider"></div>
+
+    <button id="delete-folder">
+      <span class="material-symbols-rounded"> delete </span>
+      Delete
+    </button>
+
+  </div>
+
+  <!-- ========================= FILE CONTEXT MENU ========================== -->
+
+  <div id="file-context-menu" class="context-menu">
+
+    <button id="download-file">
+      <span class="material-symbols-rounded"> download </span>
+      Download
+    </button>
+
+    <button id="rename-file">
+      <span class="material-symbols-rounded"> drive_file_rename </span>
+      Rename
+    </button>
+
+    <button id="copy-file">
+      <span class="material-symbols-rounded"> file_copy </span>
+      Copy
+    </button>
+
+    <button id="move-file">
+      <span class="material-symbols-rounded"> drive_file_move </span>
+      Move
+    </button>
+
+    <div class="context-divider"></div>
+
+    <button id="delete-file">
+      <span class="material-symbols-rounded"> delete </span>
+      Delete
+    </button>
+
+  </div>
+
+  <!-- ========================= COPY DIALOG ========================== -->
+
+  <div id="copy-dialog" class="copy-dialog">
+
+    <div class="copy-window">
+
+      <!-- Header -->
+      <div class="copy-header">
+
+        <h2>Copy to</h2>
+
+        <button type="button" id="close-copy-dialog" class="copy-close-button">
+          ×
+        </button>
+
+      </div>
+
+
+      <!-- Navigation -->
+      <div class="copy-navigation">
+
+        <button type="button" id="copy-back-button" class="copy-back-button">
+
+          <span class="material-symbols-rounded">
+            arrow_back
+          </span>
+
+        </button>
+
+
+        <div id="copy-breadcrumb" class="copy-breadcrumb">
+
+          <!-- JavaScript creates breadcrumb here -->
+
+        </div>
+
+      </div>
+
+
+      <!-- Folder list -->
+      <div id="copy-folder-list" class="copy-folder-list">
+
+        <!-- JavaScript creates folders here -->
+
+      </div>
+
+
+      <!-- Bottom actions -->
+      <div class="copy-actions">
+
+        <button type="button" id="cancel-copy" class="copy-cancel-button">
+          Cancel
+        </button>
+
+        <button type="button" id="confirm-copy" class="copy-confirm-button">
+          Copy
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ========================= MOVE DIALOG ========================== -->
+
+  <div id="move-dialog" class="move-dialog">
+
+    <div class="move-window">
+
+      <!-- Header -->
+      <div class="move-header">
+
+        <h2>Move to</h2>
+
+        <button type="button" id="close-move-dialog" class="move-close-button">
+          ×
+        </button>
+
+      </div>
+
+
+      <!-- Navigation -->
+      <div class="move-navigation">
+
+        <button type="button" id="move-back-button" class="move-back-button">
+
+          <span class="material-symbols-rounded">
+            arrow_back
+          </span>
+
+        </button>
+
+
+        <div id="move-breadcrumb" class="move-breadcrumb">
+
+          <!-- JavaScript creates breadcrumb here -->
+
+        </div>
+
+      </div>
+
+
+      <!-- Folder list -->
+      <div id="move-folder-list" class="move-folder-list">
+
+        <!-- JavaScript creates folders here -->
+
+      </div>
+
+
+      <!-- Actions -->
+      <div class="move-actions">
+        action-required-message
+        <button type="button" id="cancel-move" class="move-cancel-button">
+          Cancel
+        </button>
+
+        <button type="button" id="confirm-move" class="move-confirm-button">
+          Move Here
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ========================= ACTION REQUIRED ========================== -->
+
+  <div id="action-required-message" class="popup-overlay" hidden>
+    <div class="popup">
+        <button type="button" class="popup-close" id="action-required-close">
+            &times;
+        </button>
+    </div>
+</div>
+
+
+
+  <script src="{{ url_for('static', filename='js/drive.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/drive_service.js') }}"></script>
+</body>
+
+</html>

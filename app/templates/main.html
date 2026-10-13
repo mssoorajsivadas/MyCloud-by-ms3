@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MyCloud</title>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+
+  <style>
+    /* CSS Variables & Base Setup */
+    :root {
+      --bg-gradient: linear-gradient(135deg, #6B8FD4 0%, #8BA8D9 45%, #A88BB8 100%);
+
+      --color-primary: #2867ac;
+      --color-primary-hover: #3D7BD4;
+
+      --color-bg-main: #242424;
+      --color-bg-surface: #1b1b1b;
+      --color-bg-overlay: #333333;
+
+      --color-text-primary: #F1F5F9;
+      --color-text-secondary: #CBD5E1;
+      --color-text-muted: #64748B;
+
+      --color-border: #343434;
+      --color-hover-state: #353535;
+      --color-active: #2867ac;
+      --color-focus-ring: #5597EB;
+
+      --color-success: #34d399;
+      --color-warning: #fbbf24;
+      --color-danger: #f87171;
+      --color-info: #60a5fa;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg-gradient);
+      color: var(--color-text-primary);
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.6;
+      overflow: hidden;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    /* 1. Header Navigation */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+
+    .nav-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: 70px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: end;
+      gap: 1px;
+    }
+
+    .logo h1 {
+      font-size: 25px;
+    }
+
+    .logo p {
+      font-size: 15px;
+    }
+
+    .nav-actions a {
+      font-size: 15px;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border-radius: 50px;
+      font-weight: 400;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+    }
+
+    .btn-secondary {
+      background: transparent;
+    }
+
+    .btn-primary {
+      background: var(--color-primary);
+      color: var(--color-text-primary);
+    }
+
+    .btn-primary:hover {
+      background: var(--color-primary-hover);
+      color: #ffffff;
+    }
+
+    /* 2. Hero Section */
+    .hero {
+      padding: 100px 0 60px;
+      text-align: center;
+    }
+
+    .hero-badge {
+      display: inline-block;
+      padding: 6px 16px;
+      background: var(--color-primary-hover);
+      border-radius: 20px;
+      font-size: 0.875rem;
+      border: none;
+      margin-bottom: 20px;
+    }
+
+    .hero h1 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 20px;
+    }
+
+    .hero p {
+      font-size: 1rem;
+      color: var(--text-muted);
+      max-width: 650px;
+      margin: 0 auto 32px;
+    }
+
+    .gitbutton button {
+      font-size: 15px;
+      color: #ffffff;
+      background: var(--color-primary);
+      border: none;
+      border-radius: 50px;
+      padding: 10px 20px;
+      cursor: pointer;
+    }
+
+    .gitbutton button:hover {
+      background: var(--color-primary-hover);
+    }
+
+    /* 4. Footer */
+    .footer {
+      padding: 60px 0 30px;
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 2fr repeat(3, 1fr);
+      gap: 40px;
+      margin-bottom: 40px;
+    }
+
+    .footer-brand p {
+      color: var(--text-muted);
+      margin-top: 12px;
+      font-size: 0.9rem;
+      max-width: 280px;
+    }
+
+    .footer-column h4 {
+      margin-bottom: 16px;
+      font-size: 1rem;
+    }
+
+    .footer-column ul {
+      list-style: none;
+    }
+
+    .footer-column li {
+      margin-bottom: 10px;
+    }
+
+    .footer-column a {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      transition: color 0.2s;
+    }
+
+    .footer-column a:hover {
+      color: var(--text-main);
+    }
+
+    .footer-bottom {
+      border-top: 1px solid var(--border-color);
+      padding-top: 24px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- 1. HEADER SECTION -->
+  <header class="header">
+    <div class="container nav-container">
+      <div class="logo">
+        <h1>MyCloud</h1>
+        <p>by ms3</p>
+      </div>
+      <div class="nav-actions">
+        <a href="/signin" class="btn btn-secondary">Sign In</a>
+        <a href="/signup" class="btn btn-primary">Get Started</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- 2. HERO SECTION -->
+  <section class="hero container">
+    <span class="hero-badge">A friendly user interface & Cloud-Native</span>
+    <h1> Welcome to MyCloud by ms3</h1>
+    <p>Build your own cloud using MyCloud by ms3 project. what you can do create folder, upload you files, copy, move,
+      delete with total infrastructure freedom. </p>
+    <div class="gitbutton">
+      <button href="https://github.com"><i class="fa-brands fa-github mr-2"></i> GitHub</button>
+    </div>
+
+
+  </section>
+
+
+
+  <!-- 4. FOOTER SECTION -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="logo">
+            <h1>MyCloud</h1>
+            <p>by ms3</p>
+          </div>
+          <p>A open-source cloud drive project built for privacy, high-speed file sync, and total
+            infrastructure freedom.</p>
+        </div>
+        <div class="footer-column">
+          <h4>Product</h4>
+          <ul>
+            <li><a href="#">Features</a></li>
+            <li><a href="#">Pricing</a></li>
+            <li><a href="#">API Access</a></li>
+            <li><a href="#">System Status</a></li>
+          </ul>
+        </div>
+        <div class="footer-column">
+          <h4>Resources</h4>
+          <ul>
+            <li><a href="#">Documentation</a></li>
+            <li><a href="#">Guides</a></li>
+            <li><a href="#">GitHub Repo</a></li>
+            <li><a href="#">Community</a></li>
+          </ul>
+        </div>
+        <div class="footer-column">
+          <h4>Legal & Security</h4>
+          <ul>
+            <li><a href="#">Privacy Policy</a></li>
+            <li><a href="#">Terms of Service</a></li>
+            <li><a href="#">Security Overview</a></li>
+            <li><a href="#">Compliance</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 Mycloud by ms3. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+</body>
+
+</html>

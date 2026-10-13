@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Setup</title>
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <style>
+        /* Light theme — default */
+        :root {
+            color-scheme: light;
+
+            --bg-gradient: linear-gradient(135deg, #C0D4F8 0%, #E3EFFF 45%, #E8D8EE 100%);
+
+            /* Light Theme */
+            --color-primary: #567fff;
+            --color-primary-hover: #3D7BD4;
+
+            --color-bg-main: #f2f2ea;
+            --color-bg-surface: #FFFFFF;
+            --color-bg-overlay: #e8e8de;
+
+            --color-text-primary: #131418;
+            --color-text-secondary: #2e3138;
+            --color-text-muted: #474b54;
+
+            --color-border: #e7ebef;
+            --color-hover-state: #dbded7;
+            --color-active: #567fff;
+            --color-focus-ring: #5597EB;
+
+            --color-success: #10b981;
+            --color-warning: #f59e0b;
+            --color-danger: #ef4444;
+            --color-info: #3b82f6;
+        }
+
+        /* Dark theme */
+        [data-theme="dark"] {
+            color-scheme: dark;
+
+            --bg-gradient: linear-gradient(135deg, #6B8FD4 0%, #8BA8D9 45%, #A88BB8 100%);
+
+            --color-primary: #2867ac;
+            --color-primary-hover: #3D7BD4;
+
+            --color-bg-main: #1b1b1b;
+            --color-bg-surface: #242424;
+            --color-bg-overlay: #36373b;
+
+            --color-text-primary: #F1F5F9;
+            --color-text-secondary: #CBD5E1;
+            --color-text-muted: #64748B;
+
+            --color-border: #343434;
+            --color-hover-state: #353535;
+            --color-active: #2867ac;
+            --color-focus-ring: #5597EB;
+
+            --color-success: #34d399;
+            --color-warning: #fbbf24;
+            --color-danger: #f87171;
+            --color-info: #60a5fa;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            background: var(--color-bg-main);
+            font-family: Arial, Helvetica, sans-serif;
+            overflow: hidden;
+            color: var(--color-text-primary);
+        }
+
+        .signup-section {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .signup-card {
+            width: min(100%, 550px);
+            padding: 35px;
+            background: var(--color-bg-surface);
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+        }
+
+        .glossy-typewriter-wrap {
+            padding: 20px 0px;
+        }
+
+        .glossy-typewriter {
+            font-size: 40px;
+            cursor: pointer;
+        }
+
+        .signup-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .signup-header h1 {
+            margin: 0 0 8px;
+            font-size: 28px;
+        }
+
+        .signup-header p {
+            margin: 0;
+            color: var(--color-text-secondary);
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 14px;
+
+            border-radius: 10px;
+            border: none;
+
+            background: var(--color-bg-main);
+            color: var(--color-text-secondary);
+
+            font-size: 15px;
+            outline: none;
+        }
+
+        .form-group input:focus {
+            border: 1px solid var(--color-border);
+        }
+
+        .form-group small {
+            color: var(--color-text-secondary);
+            font-size: 12px;
+        }
+
+        .name-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+
+            .signup-ad img {
+                width: 50px;
+                height: 50px;
+            }
+
+            gap: 12px;
+        }
+
+        .signup-button {
+            width: 100%;
+            padding: 13px;
+
+            border: none;
+            border-radius: 10px;
+
+            background: var(--color-active);
+            color: var(--color-text-primary);
+
+            font-size: 15px;
+            cursor: pointer;
+        }
+
+        .signup-button:hover {
+            opacity: 0.9;
+        }
+
+        .signin-link {
+            margin-top: 22px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .signin-link a {
+            margin-left: 5px;
+            color: var(--color-active);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        #form-message {
+            display: none;
+
+            padding: 10px 14px;
+            margin-bottom: 15px;
+
+            border-radius: 8px;
+
+            font-size: 14px;
+
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        #form-message.success {
+            display: flex;
+            background: var(--color-success);
+            color: var(--color-text-primary);
+        }
+
+
+        #form-message.error {
+            display: flex;
+            background: var(--color-danger);
+            color: var(--color-text-primary);
+        }
+
+        #message-close {
+
+            border: none;
+
+            background: transparent;
+
+            font-size: 20px;
+
+            cursor: pointer;
+
+            color: inherit;
+        }
+
+        .password-input {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .password-input input {
+            padding-right: 60px;
+        }
+
+        .show-password {
+            position: absolute;
+            right: 10px;
+
+            border: none;
+            background: transparent;
+
+            color: var(--color-text-secondary);
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .theme {
+            position: absolute;
+
+            display: flex;
+            align-items: center;
+            gap: 10px;
+
+            top: 10px;
+            right: 10px;
+            padding: 10px 20px;
+            background: var(--color-bg-surface);
+            color: var(--color-text-secondary);
+            border-radius: 50px;
+            border: none;
+        }
+
+        .theme .material-symbols-rounded {
+            font-size: 19px;
+        }
+
+        .theme:hover {
+            background: var(--color-hover-state);
+        }
+
+        .drive-name {
+            position: absolute;
+
+            display: flex;
+            align-items: end;
+            gap: 3px;
+
+            top: 10px;
+            left: 20px;
+            cursor: pointer;
+
+            font-size: 12px;
+        }
+
+        .drive-name p {
+            color: var(--color-text-secondary);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="drive-name" onclick="window.location.href='/'">
+        <h1>MyCloud</h1>
+        <p>by ms3</p>
+    </div>
+
+    <button class="theme" id="theme-toggle" type="button" aria-label="Switch to dark theme">
+        <span id="theme-icon" class="material-symbols-rounded"> dark_mode </span>
+        <span class="label" id="theme-label">Dark mode</span>
+    </button>
+
+    <section class="signup-section">
+        <div class="signup-card">
+
+            <div class="signup-header">
+                <h1>Create Account</h1>
+                <p>Create your account to get started.</p>
+            </div>
+
+            <form id="signup-form">
+
+                <div class="name-row">
+
+                    <div class="form-group">
+                        <label for="first-name">First name</label>
+                        <input type="text" id="first-name" name="first_name" autocomplete="off" placeholder="First name"
+                            required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="second-name">Second name</label>
+                        <input type="text" id="second-name" name="second_name" autocomplete="off"
+                            placeholder="Second name" required>
+                    </div>
+
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email</label>
+
+                    <input type="email" id="email" name="email" placeholder="you@example.com"
+                        pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
+                        title="Enter a valid email address, such as you@example.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="username">Username</label>
+
+                    <input type="text" id="username" name="username" autocomplete="username"
+                        placeholder="Choose a username" autocomplete="off" minlength="3" maxlength="30"
+                        pattern="[A-Za-z0-9_]+" required>
+
+                    <small>
+                        3–30 characters. Letters, numbers and _ only.
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+
+                    <div class="password-input">
+
+                        <input type="password" id="password" name="password" autocomplete="new-password"
+                            placeholder="Enter your password" minlength="8" required>
+
+                        <button type="button" class="show-password" id="show-password">
+                            Show
+                        </button>
+
+                    </div>
+
+                    <small>At least 8 characters.</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirm-password">Confirm password</label>
+
+                    <div class="password-input">
+
+                        <input type="password" id="confirm-password" name="confirm_password" autocomplete="new-password"
+                            placeholder="Re-enter your password" minlength="8" required>
+
+                        <button type="button" class="show-password" id="show-confirm-password">
+                            Show
+                        </button>
+
+                    </div>
+
+                </div>
+
+                <div id="form-message">
+                    <span id="message-text"></span>
+                    <button id="message-close" type="button">×</button>
+                </div>
+
+                <button type="submit" class="signup-button">
+                    Create account
+                </button>
+
+            </form>
+
+            <div class="signin-link">
+                <span>Already have an account?</span>
+                <a href="/signin">Sign in</a>
+            </div>
+
+        </div>
+    </section>
+
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script>
+        const password = document.querySelector("#password");
+        const confirmPassword = document.querySelector("#confirm-password");
+        const messageBox = document.querySelector("#form-message");
+        const messageText = document.querySelector("#message-text");
+        const closeButton = document.querySelector("#message-close");
+        const showPassword = document.querySelector("#show-password");
+        const showConfirmPassword = document.querySelector("#show-confirm-password");
+
+        window.addEventListener("pageshow", () => {
+            form.reset();
+        });
+
+        function showMessage(message, type) {
+
+            messageText.textContent = message;
+
+            messageBox.className = type;
+
+            setTimeout(() => {
+                messageBox.className = "";
+            }, 5000);
+
+        }
+
+        closeButton.addEventListener("click", () => {
+
+            messageBox.className = "";
+
+        });
+
+        showPassword.addEventListener("click", () => {
+
+            if (password.type === "password") {
+
+                password.type = "text";
+                showPassword.textContent = "Hide";
+
+            } else {
+
+                password.type = "password";
+                showPassword.textContent = "Show";
+
+            }
+
+        });
+
+
+        showConfirmPassword.addEventListener("click", () => {
+
+            if (confirmPassword.type === "password") {
+
+                confirmPassword.type = "text";
+                showConfirmPassword.textContent = "Hide";
+
+            } else {
+
+                confirmPassword.type = "password";
+                showConfirmPassword.textContent = "Show";
+
+            }
+
+        });
+
+    </script>
+</body>
+
+</html>
