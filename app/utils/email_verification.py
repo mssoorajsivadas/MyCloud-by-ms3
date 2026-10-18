@@ -3,13 +3,9 @@ from datetime import datetime, timedelta, timezone
 
 VERIFICATION_GRACE_PERIOD = timedelta(days=7)
 
-'''
-#============================#
 
-    Email Verify Deadline
 
-#============================#
-'''
+### Email Verify Deadline ###
 def is_verification_grace_period_expired(user):
     if user.email_verified:
         return False
@@ -20,13 +16,8 @@ def is_verification_grace_period_expired(user):
     return now >= registered_at + VERIFICATION_GRACE_PERIOD
 
 
-'''
-#============================#
 
-    Email Verify Checker
-
-#============================#
-'''
+### Email Verify Checker ###
 def require_drive_access(user):
     if is_verification_grace_period_expired(user):
         return {

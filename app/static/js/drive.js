@@ -66,6 +66,22 @@ let moveDestinationId = null;
 let moveDestinationHistory = [];
 let moveItemType = null;
 
+let searchTimeout = null;
+let isSearchActive = false;
+let folderBeforeSearch = null;
+
+let allSearchFiles = [];
+let allSearchFolders = [];
+let activeSearchType = "all";
+
+/* ============================
+   Trash Navigation State
+============================ */
+
+let currentTrashFolderId = null;
+let trashFolderHistory = [];
+
+
 /* ===========================# File Type #=========================== */
 
 function getFileIcon(fileType) {
@@ -129,6 +145,47 @@ if (welcome) {
         });
 }
 
+/* ===========================# Account sectting #=========================== */
+async function loadAccountCard() {
+    const firstName = document.getElementById("account-first-name");
+    const secondName = document.getElementById("account-second-name");
+    const email = document.getElementById("account-email");
+    const emailStatus = document.getElementById("account-email-status");
+
+    try {
+        const response = await fetch("/api/auth/me", {
+            method: "GET",
+            credentials: "same-origin"
+        });
+
+        const user = await response.json();
+
+        if (!response.ok) {
+            throw new Error(user.error || "Unable to load account information");
+        }
+
+        firstName.textContent = user.first_name || "Not provided";
+        secondName.textContent = user.second_name || "Not provided";
+        email.textContent = user.email || "Not provided";
+
+        if (user.email_verified) {
+            emailStatus.textContent = "Verified";
+            emailStatus.className = "verification-status verified";
+        } else {
+            emailStatus.textContent = "Not verified";
+            emailStatus.className = "verification-status unverified";
+        }
+
+    } catch (error) {
+        console.error("Failed to load account:", error);
+
+        firstName.textContent = "Unavailable";
+        secondName.textContent = "Unavailable";
+        email.textContent = "Unavailable";
+        emailStatus.textContent = "Unavailable";
+        emailStatus.className = "verification-status";
+    }
+}
 
 /* ===========================# Logout Page #=========================== */
 
@@ -154,7 +211,7 @@ if (logoutButton) {
                     data.message || "You have been signed out successfully.",
                     "success"
                 );
-                
+
             } else {
                 logoutButton.disabled = false;
                 console.error("Logout failed:", data);
@@ -478,6 +535,20 @@ async function loadFolders(parentId = null) {
 
         fileList.innerHTML = "";
 
+        // Hide search information when browsing folders normally.
+        const resultsInfo = document.getElementById("search-results-info");
+        const emptyMessage = document.getElementById("search-empty-message");
+
+        if (resultsInfo) resultsInfo.hidden = true;
+        if (emptyMessage) emptyMessage.hidden = true;
+
+        // Hide the search filter menu.
+        if (searchFilterMenu) {
+            searchFilterMenu.hidden = true;
+            searchFilterDropdown.hidden = true;
+            searchFilterToggle.setAttribute("aria-expanded", "false");
+        }
+
 
         /* --------------------------- Display Folders -------------------------- */
 
@@ -528,32 +599,88 @@ async function loadFolders(parentId = null) {
 
         /* --------------------------- Display Files -------------------------- */
 
+        previewFiles = [...files];
+
         files.forEach(file => {
 
             const fileElement = document.createElement("div");
             fileElement.className = "files";
 
-            const fileIcon = document.createElement("span");
-            fileIcon.className = "material-symbols-rounded";
-            fileIcon.textContent = getFileIcon(file.file_type);
+            fileElement.style.cursor = "pointer";
+
+            fileElement.addEventListener("click", () => {
+                openFilePreview(file);
+            });
+
+            /* --------------------------- File Preview -------------------------- */
+
+            if (
+                file.thumbnail_name &&
+                (
+                    file.file_type === "image" ||
+                    file.file_type === "pdf" ||
+                    file.file_type === "video"
+                )
+            ) {
+
+                const thumbnail = document.createElement("img");
+
+                thumbnail.className = "file-thumbnail";
+
+                thumbnail.src = `/api/files/${file.id}/thumbnail`;
+
+                thumbnail.alt = "";
+
+                thumbnail.loading = "lazy";
+
+                thumbnail.addEventListener("error", () => {
+
+                    const fileIcon = document.createElement("span");
+
+                    fileIcon.className = "material-symbols-rounded";
+
+                    fileIcon.textContent = getFileIcon(file.file_type);
+
+                    thumbnail.replaceWith(fileIcon);
+
+                }, { once: true });
+
+                fileElement.appendChild(thumbnail);
+
+            } else {
+
+                const fileIcon = document.createElement("span");
+
+                fileIcon.className = "material-symbols-rounded";
+
+                fileIcon.textContent = getFileIcon(file.file_type);
+
+                fileElement.appendChild(fileIcon);
+
+            }
+
+            /* --------------------------- File Name -------------------------- */
 
             const fileName = document.createElement("span");
+
             fileName.className = "file-label";
+
             fileName.textContent = file.name;
 
+            /* --------------------------- Context Menu -------------------------- */
 
             fileElement.addEventListener("contextmenu", (event) => {
 
                 event.preventDefault();
 
                 showFileContextMenu(event, file);
-            });
 
-            fileElement.appendChild(fileIcon);
+            });
 
             fileElement.appendChild(fileName);
 
             fileList.appendChild(fileElement);
+
         });
 
 
@@ -617,82 +744,352 @@ createFolderModal.addEventListener("click", (event) => {
 /* #=========================# File Upload #==========================# */
 
 const fileInput = document.getElementById("file-input");
-
 const uploadFileButton = document.getElementById("upload-file-button");
 
+let isUploading = false;
 
+// Open the file manager.
 uploadFileButton.addEventListener("click", () => {
+    if (isUploading) return;
 
     addMenu.classList.remove("open");
-
     fileInput.click();
-
 });
 
-fileInput.addEventListener("change", async () => {
-
-    if (fileInput.files.length === 0) {
+// File picker and drag-and-drop will both use this function.
+async function uploadFiles(files) {
+    if (isUploading || files.length === 0) {
         return;
     }
 
-    const file = fileInput.files[0];
+    isUploading = true;
+    uploadFileButton.disabled = true;
 
     const formData = new FormData();
 
-    formData.append("file", file);
+    files.forEach(file => {
+        formData.append("files", file);
+    });
 
     if (currentFolderId !== null) {
-        formData.append(
-            "folder_id",
-            currentFolderId
-        );
+        formData.append("folder_id", currentFolderId);
     }
 
+    uploadProgressContainer.hidden = false;
+    uploadProgressText.textContent = `Uploading ${files.length} file(s)...`;
+    uploadProgressPercent.textContent = "0%";
+    uploadProgressFill.style.width = "0%";
+    uploadProgressBar.setAttribute("aria-valuenow", "0");
+
     try {
+        const result = await new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
 
+            xhr.open("POST", "/api/files/");
 
-        const response = await fetch(
-            "/api/files/",
-            {
-                method: "POST",
-                body: formData
-            }
-        );
+            xhr.upload.addEventListener("progress", event => {
+                if (!event.lengthComputable) return;
 
-        console.log("Response status:", response.status);
+                const percent = Math.round(
+                    (event.loaded / event.total) * 100
+                );
 
-        const data = await response.json();
+                uploadProgressFill.style.width = `${percent}%`;
+                uploadProgressPercent.textContent = `${percent}%`;
+                uploadProgressBar.setAttribute(
+                    "aria-valuenow",
+                    String(percent)
+                );
+            });
 
-        if (!response.ok) {
+            xhr.addEventListener("load", () => {
+                let data;
+
+                try {
+                    data = JSON.parse(xhr.responseText);
+                } catch {
+                    reject(new Error("Invalid server response."));
+                    return;
+                }
+
+                resolve({
+                    status: xhr.status,
+                    data
+                });
+            });
+
+            xhr.addEventListener("error", () => {
+                reject(new Error("Network error during upload."));
+            });
+
+            xhr.send(formData);
+        });
+
+        const { status, data } = result;
+
+        if (status === 207) {
+            uploadProgressText.textContent = "Upload completed with errors.";
 
             showMessage(
-                data.message ||
-                data.error || "File upload failed.",
+                `${data.successful_count} uploaded, ${data.failed_count} failed.`,
+                "error"
+            );
+
+            console.log("Failed files:", data.failed);
+
+            await loadFolders(currentFolderId);
+            return;
+        }
+
+        if (status !== 200 && status !== 201) {
+            uploadProgressText.textContent = "Upload failed.";
+
+            showMessage(
+                data.message || data.error || "File upload failed.",
                 "error"
             );
 
             return;
         }
 
+        uploadProgressFill.style.width = "100%";
+        uploadProgressPercent.textContent = "100%";
+        uploadProgressBar.setAttribute("aria-valuenow", "100");
+        uploadProgressText.textContent = "Upload complete!";
+
         showMessage(
-            data.message || "File uploaded successfully.",
+            data.message ||
+            `${data.successful_count ?? files.length} file(s) uploaded successfully.`,
             "success"
         );
-
-        fileInput.value = "";
 
         await loadFolders(currentFolderId);
 
     } catch (error) {
-
         console.error("UPLOAD ERROR:", error);
+        uploadProgressText.textContent = "Upload failed.";
 
         showMessage(
-            "Something went wrong while uploading the file.",
+            error.message || "Something went wrong while uploading files.",
             "error"
         );
+
+    } finally {
+        isUploading = false;
+        uploadFileButton.disabled = false;
+        fileInput.value = "";
+
+        setTimeout(() => {
+            uploadProgressContainer.hidden = true;
+        }, 1500);
     }
+}
+
+// Upload files selected through the file manager.
+fileInput.addEventListener("change", async () => {
+    const files = Array.from(fileInput.files);
+
+    if (files.length === 0) return;
+
+    await uploadFiles(files);
 });
+
+/* #=========================# Folder Upload #==========================# */
+const uploadFolderButton = document.getElementById("upload-folder-button");
+const folderInput = document.getElementById("folder-input");
+
+uploadFolderButton.addEventListener("click", () => {
+    if (isUploading) {
+        showMessage("Please wait for the current upload to finish.");
+        return;
+    }
+    addMenu.classList.remove("open");
+    folderInput.click();
+});
+
+folderInput.addEventListener("change", async () => {
+    const files = Array.from(folderInput.files);
+
+    if (files.length === 0) {
+        return;
+    }
+
+    // Every file must have a relative path supplied by the folder picker.
+    const filesWithoutPaths = files.filter(
+        file => !file.webkitRelativePath
+    );
+
+    if (filesWithoutPaths.length > 0) {
+        showMessage("Could not read the selected folder structure.");
+        folderInput.value = "";
+        return;
+    }
+
+    await uploadFolderFiles(files);
+
+    // Allow selecting the same folder again later.
+    folderInput.value = "";
+});
+
+async function uploadFolderFiles(files) {
+    if (isUploading) {
+        showMessage("An upload is already in progress.");
+        return;
+    }
+
+    isUploading = true;
+
+    const progressContainer = document.getElementById(
+        "upload-progress-container"
+    );
+    const progressText = document.getElementById("upload-progress-text");
+    const progressPercent = document.getElementById("upload-progress-percent");
+    const progressBar = document.getElementById("upload-progress-bar");
+    const progressFill = document.getElementById("upload-progress-fill");
+
+    const formData = new FormData();
+
+    // Send each file and its matching relative path.
+    for (const file of files) {
+        formData.append("files", file);
+        formData.append("relative_paths", file.webkitRelativePath);
+    }
+
+    // Upload into the current folder when one is open.
+    if (currentFolderId !== null && currentFolderId !== undefined) {
+        formData.append("parent_id", String(currentFolderId));
+    }
+
+    // Show the existing upload progress UI.
+    if (progressContainer) {
+        progressContainer.hidden = false;
+    }
+
+    if (progressText) {
+        progressText.textContent = "Uploading folder...";
+    }
+
+    if (progressPercent) {
+        progressPercent.textContent = "0%";
+    }
+
+    if (progressBar) {
+        progressBar.setAttribute("aria-valuenow", "0");
+    }
+
+    if (progressFill) {
+        progressFill.style.width = "0%";
+    }
+
+    try {
+        const response = await new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+
+            xhr.open("POST", "/api/folders/upload");
+
+            // Track the upload progress in the browser.
+            xhr.upload.addEventListener("progress", event => {
+                if (!event.lengthComputable) {
+                    return;
+                }
+
+                const percent = Math.round(
+                    (event.loaded / event.total) * 100
+                );
+
+                if (progressPercent) {
+                    progressPercent.textContent = `${percent}%`;
+                }
+
+                if (progressText) {
+                    progressText.textContent = "Uploading folder...";
+                }
+
+                if (progressFill) {
+                    progressFill.style.width = `${percent}%`;
+                }
+
+                if (progressBar) {
+                    progressBar.setAttribute(
+                        "aria-valuenow",
+                        String(percent)
+                    );
+                }
+            });
+
+            xhr.addEventListener("load", () => {
+                let data;
+
+                try {
+                    data = JSON.parse(xhr.responseText);
+                } catch {
+                    reject(new Error("The server returned an invalid response."));
+                    return;
+                }
+
+                resolve({
+                    status: xhr.status,
+                    data
+                });
+            });
+
+            xhr.addEventListener("error", () => {
+                reject(new Error("Network error during folder upload."));
+            });
+
+            xhr.addEventListener("abort", () => {
+                reject(new Error("Folder upload was cancelled."));
+            });
+
+            // Do not set Content-Type manually.
+            // The browser must add the multipart boundary.
+            xhr.send(formData);
+        });
+
+        if (response.status === 201) {
+            if (progressText) {
+                progressText.textContent = "Folder uploaded successfully.";
+            }
+
+            if (progressPercent) {
+                progressPercent.textContent = "100%";
+            }
+
+            if (progressFill) {
+                progressFill.style.width = "100%";
+            }
+
+            showMessage(
+                `Folder uploaded: ${response.data.folder_count} folders and ${response.data.file_count} files.`
+            );
+
+            // Refresh the currently open location.
+            await loadFolders(currentFolderId);
+            await loadFiles(currentFolderId);
+        } else if (
+            response.status === 403 &&
+            response.data.error === "email_verification_required"
+        ) {
+            showMessage(response.data.message);
+        } else {
+            showMessage(
+                response.data.error || "Folder upload failed."
+            );
+        }
+    } catch (error) {
+        console.error("Folder upload failed:", error);
+        showMessage(error.message || "Folder upload failed.");
+    } finally {
+        isUploading = false;
+
+        // Hide the progress UI after a short delay.
+        setTimeout(() => {
+            if (progressContainer) {
+                progressContainer.hidden = true;
+            }
+        }, 1200);
+    }
+}
 
 
 /* ===========================# Folders Context Menu #=========================== */
@@ -1308,11 +1705,9 @@ if (submitFolderForm) {
 
                 );
 
-                selectedFolder = null;
-
-                folderNameInput.value = "";
-
                 createFolderModal.classList.remove("open");
+
+                selectedFile = null;
 
                 await loadFolders(currentFolderId);
 
@@ -1564,9 +1959,18 @@ confirmCopyButton.addEventListener("click", async () => {
         const data = await response.json();
 
         if (!response.ok) {
-            alert(data.error);
+            showMessage(
+                data.error || data.message || "Something went wrong.",
+                "error"
+            );
             return;
         }
+
+        showMessage(
+            data.message ||
+            "Folder copy successfully.",
+            "success"
+        );
 
         document.getElementById(
             "copy-dialog"
@@ -1604,9 +2008,18 @@ confirmCopyButton.addEventListener("click", async () => {
         const data = await response.json();
 
         if (!response.ok) {
-            alert(data.error);
+            showMessage(
+                data.error || data.message || "Something went wrong.",
+                "error"
+            );
             return;
         }
+
+        showMessage(
+            data.message ||
+            "File copy successfully.",
+            "success"
+        );
 
         document.getElementById(
             "copy-dialog"
@@ -1841,9 +2254,18 @@ confirmMoveButton.addEventListener("click", async () => {
         const data = await response.json();
 
         if (!response.ok) {
-            alert(data.error);
+            showMessage(
+                data.error || data.message || "Something went wrong.",
+                "error"
+            );
             return;
         }
+
+        showMessage(
+            data.message ||
+            "Folder move successfully.",
+            "success"
+        );
 
         document.getElementById(
             "move-dialog"
@@ -1881,9 +2303,18 @@ confirmMoveButton.addEventListener("click", async () => {
         const data = await response.json();
 
         if (!response.ok) {
-            alert(data.error);
+            showMessage(
+                data.error || data.message || "Something went wrong.",
+                "error"
+            );
             return;
         }
+
+        showMessage(
+            data.message ||
+            "File move successfully.",
+            "success"
+        );
 
         document.getElementById(
             "move-dialog"
@@ -2226,24 +2657,1506 @@ async function sendVerificationEmail() {
     }
 }
 
+/* #===========================# Search Bar for MyDrive #===========================# */
+
+const searchToggle = document.getElementById("search-toggle");
+const searchBar = document.getElementById("search-bar");
+const searchInput = document.getElementById("drive-search-input");
+const searchClose = document.getElementById("search-close");
+const myDriveButton = document.querySelector(
+    '.sidebar-menu-button[data-section="mydrive"]'
+);
+
+searchInput.addEventListener("focus", () => {
+    myDriveButton.click();
+});
+
+searchToggle.addEventListener("click", () => {
+    if (searchBar.classList.contains("is-open")) {
+        searchClose.click();
+        return;
+    }
+
+    isSearchActive = false;
+
+    searchBar.classList.add("is-open");
+    searchFilterMenu.hidden = false;
+
+    searchToggle.setAttribute("aria-expanded", "true");
+    searchInput.focus();
+});
+
+searchClose.addEventListener("click", () => {
+    clearTimeout(searchTimeout);
+
+    searchFilterMenu.hidden = true;
+    searchFilterDropdown.hidden = true;
+
+    searchFilterToggle.setAttribute("aria-expanded", "false");
+    searchToggle.setAttribute("aria-expanded", "false");
+
+    searchInput.value = "";
+    searchBar.classList.remove("is-open");
+    searchToggle.setAttribute("aria-expanded", "false");
+
+    isSearchActive = false;
+
+    const folderToRestore = folderBeforeSearch ?? currentFolderId;
+    folderBeforeSearch = null;
+
+    loadFolders(folderToRestore);
+    searchToggle.focus();
+});
+
+searchInput.addEventListener("input", () => {
+    clearTimeout(searchTimeout);
+
+    const query = searchInput.value.trim();
+
+    if (!query) {
+        isSearchActive = false;
+
+        // Return to the folder that was open before searching.
+        loadFolders(folderBeforeSearch ?? currentFolderId);
+
+        folderBeforeSearch = null;
+        return;
+    }
+
+    // Save the current folder only when starting a new search.
+    if (!isSearchActive && folderBeforeSearch === null) {
+        folderBeforeSearch = currentFolderId;
+    }
+
+    searchTimeout = setTimeout(() => {
+        searchFilesAndFolders(query);
+    }, 300);
+});
+
+async function searchFilesAndFolders(query) {
+    try {
+        const response = await fetch(
+            `/api/browse/search?q=${encodeURIComponent(query)}`
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            if (handleVerificationRequired(data)) {
+                return;
+            }
+
+            console.error(
+                data.error || "Search failed."
+            );
+
+            return;
+        }
+
+        allSearchFiles = data.files;
+        allSearchFolders = data.folders;
+        activeSearchType = "all";
+
+        document.querySelectorAll(".search-filter-option").forEach(option => {
+            option.classList.toggle("active", option.dataset.type === "all");
+        });
+
+        searchFilterToggle.querySelectorAll("span")[1].textContent = "Filter";
+
+        searchFilterDropdown.hidden = true;
+        searchFilterToggle.setAttribute("aria-expanded", "false");
+
+        applySearchFilter();
+
+    } catch (error) {
+        console.error("Search failed:", error);
+    }
+}
 
 
 
+function displaySearchResults(files, folders) {
+    const folderList = document.getElementById("folder-list");
+    const fileList = document.getElementById("file-list");
+
+    folderList.innerHTML = "";
+    fileList.innerHTML = "";
+
+    const resultsInfo = document.getElementById("search-results-info");
+    const resultsTitle = document.getElementById("search-results-title");
+    const resultsCount = document.getElementById("search-results-count");
+    const emptyMessage = document.getElementById("search-empty-message");
+
+    const query = searchInput.value.trim();
+
+    if (resultsInfo && resultsTitle && resultsCount && emptyMessage) {
+        resultsTitle.textContent = `Results for "${query}"`;
+
+        resultsCount.textContent =
+            `${files.length} ${files.length === 1 ? "file" : "files"} · ` +
+            `${folders.length} ${folders.length === 1 ? "folder" : "folders"}`;
+
+        resultsInfo.hidden = false;
+        emptyMessage.hidden = files.length > 0 || folders.length > 0;
+    }
+
+    // Show matching folders
+    folders.forEach(folder => {
+        const folderElement = document.createElement("button");
+        folderElement.className = "folders";
+
+        const folderIcon = document.createElement("span");
+        folderIcon.className = "material-symbols-rounded";
+        folderIcon.textContent = "folder";
+
+        const folderName = document.createElement("span");
+        folderName.className = "folders-label";
+        folderName.textContent = folder.name;
+
+        folderElement.appendChild(folderIcon);
+        folderElement.appendChild(folderName);
+
+        folderElement.addEventListener("click", async () => {
+            await openSearchResultFolder(folder);
+        });
+
+        folderElement.addEventListener("contextmenu", event => {
+            event.preventDefault();
+            showFolderContextMenu(event, folder);
+        });
+
+        folderList.appendChild(folderElement);
+    });
+
+    // Keep preview navigation limited to the displayed search results
+    previewFiles = [...files];
+
+    // Show matching files
+    files.forEach(file => {
+        const fileElement = document.createElement("div");
+        fileElement.className = "files";
+        fileElement.style.cursor = "pointer";
+
+        if (
+            file.thumbnail_name &&
+            ["image", "pdf", "video"].includes(file.file_type)
+        ) {
+            const thumbnail = document.createElement("img");
+            thumbnail.className = "file-thumbnail";
+            thumbnail.src = `/api/files/${file.id}/thumbnail`;
+            thumbnail.alt = "";
+            thumbnail.loading = "lazy";
+
+            thumbnail.addEventListener("error", () => {
+                const fileIcon = document.createElement("span");
+                fileIcon.className = "material-symbols-rounded";
+                fileIcon.textContent = getFileIcon(file.file_type);
+                thumbnail.replaceWith(fileIcon);
+            }, { once: true });
+
+            fileElement.appendChild(thumbnail);
+        } else {
+            const fileIcon = document.createElement("span");
+            fileIcon.className = "material-symbols-rounded";
+            fileIcon.textContent = getFileIcon(file.file_type);
+            fileElement.appendChild(fileIcon);
+        }
+
+        const fileName = document.createElement("span");
+        fileName.className = "file-label";
+        fileName.textContent = file.name;
+
+        fileElement.appendChild(fileName);
+
+        fileElement.addEventListener("click", () => {
+            openFilePreview(file);
+        });
+
+        fileElement.addEventListener("contextmenu", event => {
+            event.preventDefault();
+            showFileContextMenu(event, file);
+        });
+
+        fileList.appendChild(fileElement);
+    });
+}
+
+// Add the keyboard shortcuts
+async function openSearchResultFolder(folder) {
+    clearTimeout(searchTimeout);
+
+    try {
+        const response = await fetch(
+            `/api/browse/folders/${folder.id}/path`
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            if (handleVerificationRequired(data)) return;
+
+            console.error(data.error || "Failed to load folder path.");
+            return;
+        }
+
+        if (!Array.isArray(data.path)) {
+            console.error("Invalid folder path response.");
+            return;
+        }
+
+        // Rebuild the breadcrumb from root to selected folder.
+        folderHistory = data.path;
+
+        searchInput.value = "";
+        searchBar.classList.remove("is-open");
+        searchToggle.setAttribute("aria-expanded", "false");
+
+        isSearchActive = false;
+
+        folderBeforeSearch = null;
+
+        // Load the selected folder and save its navigation state.
+        await loadFolders(folder.id);
+
+    } catch (error) {
+        console.error("Failed to open search result folder:", error);
+    }
+}
+
+document.addEventListener("keydown", event => {
+    const isTyping =
+        event.target instanceof HTMLElement &&
+        (
+            event.target.isContentEditable ||
+            ["INPUT", "TEXTAREA", "SELECT"].includes(event.target.tagName)
+        );
+
+    // Ctrl + K: Open search
+    if (
+        event.ctrlKey &&
+        !event.shiftKey &&
+        !event.altKey &&
+        event.key.toLowerCase() === "k"
+    ) {
+        event.preventDefault();
+
+        if (!searchBar.classList.contains("is-open")) {
+            searchBar.classList.add("is-open");
+            searchToggle.setAttribute("aria-expanded", "true");
+            searchFilterMenu.hidden = false;
+        }
+
+        searchInput.focus();
+        return;
+    }
+
+    // Escape: Close search and restore the previous folder
+    if (event.key === "Escape" && searchBar.classList.contains("is-open")) {
+        event.preventDefault();
+        searchClose.click();
+        return;
+    }
+
+    // Enter: Run search immediately
+    if (
+        event.key === "Enter" &&
+        searchBar.classList.contains("is-open") &&
+        document.activeElement === searchInput &&
+        !event.isComposing
+    ) {
+        event.preventDefault();
+
+        clearTimeout(searchTimeout);
+
+        const query = searchInput.value.trim();
+
+        if (query) {
+            searchFilesAndFolders(query);
+        }
+    }
+});
+
+// Search filters
+function applySearchFilter() {
+    const files = activeSearchType === "all"
+        ? allSearchFiles
+        : allSearchFiles.filter(
+            file => file.file_type === activeSearchType
+        );
+
+    const folders = activeSearchType === "all"
+        ? allSearchFolders
+        : [];
+
+    displaySearchResults(files, folders);
+}
+
+const searchFilterMenu = document.getElementById("search-filter-menu");
+const searchFilterToggle = document.getElementById("search-filter-toggle");
+const searchFilterDropdown = document.getElementById("search-filter-dropdown");
+
+searchFilterToggle.addEventListener("click", () => {
+    searchFilterDropdown.hidden = !searchFilterDropdown.hidden;
+
+    searchFilterToggle.setAttribute(
+        "aria-expanded",
+        String(!searchFilterDropdown.hidden)
+    );
+});
+
+document.querySelectorAll(".search-filter-option").forEach(button => {
+    button.addEventListener("click", () => {
+        activeSearchType = button.dataset.type;
+
+        document.querySelectorAll(".search-filter-option").forEach(option => {
+            option.classList.toggle("active", option === button);
+        });
+
+        // Update the dropdown button's label.
+        searchFilterToggle.querySelectorAll("span")[1].textContent =
+            button.textContent.trim();
+
+        searchFilterDropdown.hidden = true;
+        searchFilterToggle.setAttribute("aria-expanded", "false");
+
+        applySearchFilter();
+    });
+});
+
+// Close the menu when clicking outside it.
+document.addEventListener("click", event => {
+    if (!searchFilterMenu.contains(event.target)) {
+        searchFilterDropdown.hidden = true;
+        searchFilterToggle.setAttribute("aria-expanded", "false");
+    }
+});
+
+/* #===========================# Trash #===========================# */
+
+async function loadTrashFolder(folderId = null) {
+    const folderList = document.getElementById("trash-folder-list");
+    const fileList = document.getElementById("trash-file-list");
+    const emptyState = document.getElementById("trash-empty-state");
+
+    try {
+        let url = "/api/trash/";
+
+        if (folderId !== null) {
+            url = `/api/trash/folder/${folderId}`;
+        }
+
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || "Failed to load Trash.");
+        }
+
+        currentTrashFolderId = folderId;
+
+        folderList.innerHTML = "";
+        fileList.innerHTML = "";
+
+        const items = data.items || [];
+
+        const folders = items.filter(item => item.type === "folder");
+        const files = items.filter(item => item.type === "file");
+
+        folders.forEach(folder => {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "trash-folder-item";
+            button.textContent = folder.name;
+
+            button.addEventListener("click", () => {
+                trashFolderHistory.push({
+                    id: folder.id,
+                    name: folder.name
+                });
+
+                loadTrashFolder(folder.id);
+            });
+
+            folderList.appendChild(button);
+        });
+
+        files.forEach(file => {
+            const item = document.createElement("div");
+            item.className = "trash-file-item";
+            item.textContent = file.name;
+
+            fileList.appendChild(item);
+        });
+
+        emptyState.hidden = items.length > 0;
+
+        updateTrashBreadcrumb();
+        updateTrashBackButton();
+
+    } catch (error) {
+        console.error("Error loading Trash:", error);
+    }
+}
+
+/* #===========================# Trash breadcrumb #===========================# */
+
+function updateTrashBreadcrumb() {
+    const breadcrumb = document.getElementById("trash-breadcrumb");
+    const backButton = document.getElementById("trash-back-button");
+
+    breadcrumb.innerHTML = "";
+
+    // Trash root
+    const trashHome = document.createElement("button");
+    trashHome.type = "button";
+    trashHome.className = "breadcrumb-home";
+    trashHome.textContent = "Trash";
+
+    trashHome.addEventListener("click", () => {
+        trashFolderHistory = [];
+        loadTrashFolder();
+    });
+
+    breadcrumb.appendChild(trashHome);
+
+    // Nested folders
+    trashFolderHistory.forEach((folder, index) => {
+        const separator = document.createElement("span");
+        separator.className = "breadcrumb-separator";
+        separator.textContent = "/";
+        breadcrumb.appendChild(separator);
+
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "breadcrumb-folder";
+        button.textContent = folder.name;
+
+        button.addEventListener("click", () => {
+            trashFolderHistory = trashFolderHistory.slice(0, index + 1);
+            loadTrashFolder(folder.id);
+        });
+
+        breadcrumb.appendChild(button);
+    });
+
+    backButton.disabled = trashFolderHistory.length === 0;
+}
+
+//back button
+document.getElementById("trash-back-button").addEventListener("click", () => {
+
+    if (trashFolderHistory.length === 0) {
+        return;
+    }
+
+    // Remove the current folder from history.
+    trashFolderHistory.pop();
+
+    // Find the parent folder, or return to the Trash root.
+    const previousFolder = trashFolderHistory.length > 0
+        ? trashFolderHistory[trashFolderHistory.length - 1].id
+        : null;
+
+    // Load the previous location.
+    loadTrashFolder(previousFolder);
+
+});
+
+function updateTrashBackButton() {
+    const backButton = document.getElementById("trash-back-button");
+
+    if (backButton) {
+        backButton.disabled = currentTrashFolderId === null;
+    }
+}
 
 
 
+//trash folders and files
+async function loadTrashFolder(folderId = null) {
+
+    try {
+
+        /* ------------------------- Trash API ------------------------- */
+
+        let trashUrl = "/api/trash/";
+
+        if (folderId !== null) {
+            trashUrl += `folder/${folderId}`;
+        }
+
+        const response = await fetch(trashUrl);
+        const data = await response.json();
+
+        if (!response.ok) {
+            if (handleVerificationRequired(data)) {
+                return;
+            }
+
+            console.log(data.error || data.message);
+            return;
+        }
+
+        /* ------------------------- Update Current Folder ------------------------- */
+
+        currentTrashFolderId = folderId;
+
+        /* ------------------------- Folder & File Lists ------------------------- */
+
+        const folderList = document.getElementById("trash-folder-list");
+        const fileList = document.getElementById("trash-file-list");
+        const emptyState = document.getElementById("trash-empty-state");
+
+        /* ------------------------- Clear Previous Content ------------------------- */
+
+        folderList.innerHTML = "";
+        fileList.innerHTML = "";
+
+        /* ------------------------- Display Folders ------------------------- */
+
+        const items = data.items || [];
+
+        const folders = items.filter(item => item.type === "folder");
+        const files = items.filter(item => item.type === "file");
+
+        folders.forEach(folder => {
+
+            const folderElement = document.createElement("button");
+            folderElement.type = "button";
+            folderElement.className = "folders";
+
+            const folderIcon = document.createElement("span");
+            folderIcon.className = "material-symbols-rounded";
+            folderIcon.textContent = "folder";
+
+            const folderName = document.createElement("span");
+            folderName.className = "folders-label";
+            folderName.textContent = folder.name;
+
+            if (trashSelectionMode) {
+                folderElement.prepend(
+                    createTrashCheckbox({
+                        ...folder,
+                        type: "folder"
+                    })
+                );
+            }
+
+            folderElement.appendChild(folderIcon);
+            folderElement.appendChild(folderName);
+
+            folderElement.addEventListener("click", (event) => {
+
+                if (event.target.closest(".trash-item-checkbox")) {
+                    return;
+                }
+
+                if (trashSelectionMode) {
+                    return;
+                }
+
+                trashFolderHistory.push({
+                    id: folder.id,
+                    name: folder.name
+                });
+
+                loadTrashFolder(folder.id);
+
+            });
+
+            folderElement.addEventListener("contextmenu", (event) => {
+                showTrashContextMenu(event, {
+                    ...folder,
+                    type: "folder"
+                });
+            });
+
+            folderList.appendChild(folderElement);
+
+        });
+
+        /* ------------------------- Display Files ------------------------- */
+
+        files.forEach(file => {
+
+            const fileElement = document.createElement("div");
+            fileElement.className = "files";
+            fileElement.style.cursor = "pointer";
+
+
+            fileElement.addEventListener("click", (event) => {
+
+                if (event.target.closest(".trash-item-checkbox")) {
+                    return;
+                }
+
+                if (trashSelectionMode) {
+                    return;
+                }
+
+                openFilePreview(file);
+
+            });
+
+            // Display thumbnail when supported.
+            if (
+                file.thumbnail_name &&
+                ["image", "pdf", "video"].includes(file.file_type)
+            ) {
+
+                const thumbnail = document.createElement("img");
+                thumbnail.className = "file-thumbnail";
+                thumbnail.src = `/api/files/${file.id}/thumbnail`;
+                thumbnail.alt = "";
+                thumbnail.loading = "lazy";
+
+                thumbnail.addEventListener("error", () => {
+
+                    const fileIcon = document.createElement("span");
+                    fileIcon.className = "material-symbols-rounded";
+                    fileIcon.textContent = getFileIcon(file.file_type);
+
+                    thumbnail.replaceWith(fileIcon);
+
+                }, { once: true });
+
+                fileElement.appendChild(thumbnail);
+
+            } else {
+
+                const fileIcon = document.createElement("span");
+                fileIcon.className = "material-symbols-rounded";
+                fileIcon.textContent = getFileIcon(file.file_type);
+
+                fileElement.appendChild(fileIcon);
+
+            }
+
+            const fileName = document.createElement("span");
+            fileName.className = "file-label";
+            fileName.textContent = file.name;
+
+            if (trashSelectionMode) {
+                fileElement.prepend(
+                    createTrashCheckbox({
+                        ...file,
+                        type: "file"
+                    })
+                );
+            }
+
+            fileElement.addEventListener("contextmenu", (event) => {
+                showTrashContextMenu(event, {
+                    ...file,
+                    type: "file"
+                });
+            });
+
+
+            fileElement.appendChild(fileName);
+            fileList.appendChild(fileElement);
+
+        });
+
+        /* ------------------------- Empty Trash Message ------------------------- */
+
+        if (emptyState) {
+            emptyState.hidden = items.length > 0;
+        }
+
+        /* ------------------------- Update Navigation ------------------------- */
+
+        updateTrashBreadcrumb();
+        updateTrashBackButton();
+
+    } catch (error) {
+
+        console.error(
+            "Failed to load Trash:",
+            error
+        );
+
+    }
+
+}
+
+/* =========================== Trash Context Menu =========================== */
+
+let trashContextItem = null;
+
+function showTrashContextMenu(event, item) {
+
+    event.preventDefault();
+
+    rightClickMenu.classList.remove("open");
+
+    closeContextMenus();
+
+    trashContextItem = item;
+
+    const contextMenu = document.getElementById("trash-context-menu");
+
+    contextMenu.style.left = `${event.clientX}px`;
+    contextMenu.style.top = `${event.clientY}px`;
+
+    contextMenu.style.display = "block";
+}
+
+document.addEventListener("click", (event) => {
+
+    const trashContextMenu = document.getElementById("trash-context-menu");
+
+    if (trashContextMenu && !trashContextMenu.contains(event.target)) {
+        trashContextMenu.style.display = "none";
+    }
+
+});
 
 
 
+let trashSelectionMode = false;
+let selectedTrashItems = new Set();
+
+//cerate checkbox
+function createTrashCheckbox(item) {
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.className = "trash-item-checkbox";
+    checkbox.dataset.id = item.id;
+    checkbox.dataset.type = item.type;
+
+    const key = `${item.type}-${item.id}`;
+
+    checkbox.checked = selectedTrashItems.has(key);
+
+    checkbox.addEventListener("change", () => {
+        if (checkbox.checked) {
+            selectedTrashItems.add(key);
+        } else {
+            selectedTrashItems.delete(key);
+        }
+    });
+
+    checkbox.addEventListener("click", event => {
+        event.stopPropagation();
+    });
+
+    return checkbox;
+}
 
 
+//context menu
+document.getElementById("trash-select-item")
+    ?.addEventListener("click", async () => {
+        trashSelectionMode = true;
+
+        document.getElementById("trash-context-menu").style.display = "none";
+
+        updateTrashSelectionToolbar();
+
+        await loadTrashFolder(currentTrashFolderId);
+    });
+
+document.addEventListener("click", (event) => {
+    if (!trashSelectionMode) return;
+
+    const trashSection = document.getElementById("trash-section");
+    const contextMenu = document.getElementById("trash-context-menu");
+    const toolbar = document.getElementById("trash-selection-toolbar");
+
+    if (
+        trashSection?.contains(event.target) ||
+        contextMenu?.contains(event.target) ||
+        toolbar?.contains(event.target)
+    ) {
+        return;
+    }
+
+    trashSelectionMode = false;
+    selectedTrashItems.clear();
+
+    const selectAllCheckbox = document.getElementById(
+        "trash-select-all-checkbox"
+    );
+
+    if (selectAllCheckbox) {
+        selectAllCheckbox.checked = false;
+    }
+
+    updateTrashSelectionToolbar();
+    loadTrashFolder(currentTrashFolderId);
+});
+
+//get seleted item
+function getSelectedTrashItems() {
+    return Array.from(selectedTrashItems).map(key => {
+        const separatorIndex = key.indexOf("-");
+        const type = key.slice(0, separatorIndex);
+        const id = Number(key.slice(separatorIndex + 1));
+
+        return { type, id };
+    });
+}
+
+/* #===========================# restore function #===========================# */
+
+async function restoreSelectedTrashItems() {
+    const items = getSelectedTrashItems();
+
+    if (items.length === 0) {
+        showMessage(
+            "Please select at least one item.",
+            "error"
+        );
+        return;
+    }
+
+    try {
+        const response = await fetch("/api/trash/restore", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ items })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            if (handleVerificationRequired(data)) {
+                return;
+            }
+
+            showMessage(
+                data.error ||
+                data.message ||
+                "Failed to restore selected items.",
+                "error"
+            );
+            return;
+        }
+
+        selectedTrashItems.clear();
+        trashSelectionMode = false;
+
+        trashContextItem = null;
+
+        const selectAllCheckbox = document.getElementById(
+            "trash-select-all-checkbox"
+        );
+
+        if (selectAllCheckbox) {
+            selectAllCheckbox.checked = false;
+        }
+
+        await loadFolders();
+
+        updateTrashSelectionToolbar();
+
+        await loadTrashFolder(currentTrashFolderId);
+
+        showMessage(
+            "Selected items restored successfully.",
+            "success"
+        );
+
+    } catch (error) {
+
+        showMessage(
+            "Unable to connect to the server.",
+            "error"
+        );
+    }
+}
+
+document.getElementById("restore-selected-button")
+    ?.addEventListener("click", restoreSelectedTrashItems);
+
+document.getElementById("trash-restore-item")
+    ?.addEventListener("click", async () => {
+        if (!trashContextItem) {
+            return;
+        }
+
+        const item = {
+            type: trashContextItem.type,
+            id: trashContextItem.id
+        };
+
+        const response = await fetch("/api/trash/restore", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                items: [item]
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            if (handleVerificationRequired(data)) {
+                return;
+            }
+
+            showMessage(
+                data.error ||
+                data.message ||
+                "Failed to restore selected items.",
+                "error"
+            );
+            return;
+        }
+
+        selectedTrashItems.clear();
+        trashSelectionMode = false;
+        trashContextItem = null;
+
+        await loadFolders();
+
+        await loadTrashFolder(currentTrashFolderId);
+
+        showMessage(
+            "Selected items restored successfully.",
+            "success"
+        );
+    });
+
+/* #===========================# deletet function #===========================# */
+async function permanentlyDeleteTrashItems(items) {
+    if (!items || items.length === 0) {
+        showMessage(
+            "Please select at least one item.",
+            "error"
+        );
+        return;
+    }
+
+    const confirmed = await showConfirm({
+        title: "Delete permanently?",
+        message: `Permanently delete ${items.length} selected item(s)? This action cannot be undone.`,
+        confirmText: "Delete permanently",
+        cancelText: "Cancel",
+        danger: true
+    });
+
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+        const response = await fetch("/api/trash/permanent", {
+            method: "DELETE",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ items })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            if (handleVerificationRequired(data)) {
+                return;
+            }
+            showMessage(
+                data.error ||
+                data.message ||
+                "Failed to permanently delete items.",
+                "error"
+            );
+
+            return;
+        }
+
+        const selectAllCheckbox = document.getElementById(
+            "trash-select-all-checkbox"
+        );
+
+        if (selectAllCheckbox) {
+            selectAllCheckbox.checked = false;
+        }
+
+        updateTrashSelectionToolbar();
+
+        selectedTrashItems.clear();
+        trashSelectionMode = false;
+        trashContextItem = null;
+
+        await loadTrashFolder(currentTrashFolderId);
+
+        showMessage(
+            "Selected items permanently deleted.",
+            "success"
+        );
+
+    } catch (error) {
+
+        showMessage(
+            "Unable to connect to the server.",
+            "error"
+        );
+    }
+}
+
+document.getElementById("trash-delete-item")
+    ?.addEventListener("click", () => {
+        if (!trashContextItem) {
+            return;
+        }
+
+        permanentlyDeleteTrashItems([
+            {
+                type: trashContextItem.type,
+                id: Number(trashContextItem.id)
+            }
+        ]);
+    });
+
+/* #===========================# Trash helper function #===========================# */
+function updateTrashSelectionToolbar() {
+    const toolbar = document.getElementById("trash-selection-toolbar");
+
+    if (toolbar) {
+        toolbar.hidden = !trashSelectionMode;
+    }
+}
+
+function selectAllTrashItems(checked) {
+    const checkboxes = document.querySelectorAll(
+        "#trash-folder-list .trash-item-checkbox, " +
+        "#trash-file-list .trash-item-checkbox"
+    );
+
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = checked;
+
+        const key = `${checkbox.dataset.type}-${checkbox.dataset.id}`;
+
+        if (checked) {
+            selectedTrashItems.add(key);
+        } else {
+            selectedTrashItems.delete(key);
+        }
+    });
+}
+
+document.getElementById("trash-select-all-checkbox")
+    ?.addEventListener("change", event => {
+        selectAllTrashItems(event.target.checked);
+    });
+
+document.getElementById("delete-selected-button")
+    ?.addEventListener("click", () => {
+        permanentlyDeleteTrashItems(getSelectedTrashItems());
+    });
+
+/* #===========================# Empty Trash Button #===========================# */
+async function emptyTrash() {
+    const trashItems = [
+        ...document.querySelectorAll(
+            "#trash-folder-list .trash-item-checkbox, " +
+            "#trash-file-list .trash-item-checkbox"
+        )
+    ];
+
+    if (
+        document.getElementById("trash-empty-state")?.checkVisibility() &&
+        trashItems.length === 0
+    ) {
+        showMessage("Trash is already empty.", "info");
+        return;
+    }
+
+    const confirmed = await showConfirm({
+        title: "Empty Trash?",
+        message: "Permanently delete all files and folders in Trash? This action cannot be undone.",
+        confirmText: "Empty Trash",
+        cancelText: "Cancel",
+        danger: true
+    });
+
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+        const response = await fetch("/api/trash/empty", {
+            method: "DELETE"
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            if (handleVerificationRequired(data)) {
+                return;
+            }
+
+            showMessage(
+                data.error ||
+                data.message ||
+                "Failed to empty Trash.",
+                "error"
+            );
+
+            return;
+        }
+
+        // Clear the current selection.
+        selectedTrashItems.clear();
+        trashSelectionMode = false;
+        trashContextItem = null;
+
+        const selectAllCheckbox = document.getElementById(
+            "trash-select-all-checkbox"
+        );
+
+        if (selectAllCheckbox) {
+            selectAllCheckbox.checked = false;
+        }
+
+        updateTrashSelectionToolbar();
+
+        // Refresh the Trash view.
+        await loadTrashFolder(currentTrashFolderId);
+
+        showMessage(
+            data.message || "Trash emptied successfully.",
+            "success"
+        );
+
+    } catch (error) {
+        console.error("Empty Trash failed:", error);
+
+        showMessage(
+            "Unable to connect to the server.",
+            "error"
+        );
+    }
+}
+
+document.getElementById("empty-trash-button")
+    ?.addEventListener("click", emptyTrash);
 
 
+/* ============================== Change Password ============================ */
+const passwordModal = document.getElementById("password-modal-overlay");
+const openPasswordModal = document.getElementById("open-password-modal");
+const closePasswordModal = document.getElementById("close-password-modal");
+const changePasswordForm = document.getElementById("change-password-form");
+const passwordMessage = document.getElementById("password-form-message");
+const submitPasswordButton = document.getElementById("submit-password-change");
+
+openPasswordModal.addEventListener("click", () => {
+    passwordModal.hidden = false;
+    document.getElementById("current-password").focus();
+});
+
+function closePasswordPopup() {
+    passwordModal.hidden = true;
+    changePasswordForm.reset();
+    passwordMessage.textContent = "";
+}
+
+closePasswordModal.addEventListener("click", closePasswordPopup);
+
+passwordModal.addEventListener("click", (event) => {
+    if (event.target === passwordModal) {
+        closePasswordPopup();
+    }
+});
+
+document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !passwordModal.hidden) {
+        closePasswordPopup();
+    }
+});
+
+changePasswordForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const currentPassword =
+        document.getElementById("current-password").value;
+
+    const newPassword =
+        document.getElementById("new-password").value;
+
+    const confirmPassword =
+        document.getElementById("confirm-password").value;
+
+    if (newPassword !== confirmPassword) {
+        passwordMessage.textContent = "The new passwords do not match.";
+        return;
+    }
+
+    if (currentPassword === newPassword) {
+        passwordMessage.textContent =
+            "Choose a password different from your current one.";
+        return;
+    }
+
+    submitPasswordButton.disabled = true;
+    submitPasswordButton.textContent = "Updating...";
+    passwordMessage.textContent = "";
+
+    try {
+        const response = await fetch("/api/auth/change-password", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            credentials: "same-origin",
+            body: JSON.stringify({
+                current_password: currentPassword,
+                new_password: newPassword,
+                confirm_password: confirmPassword
+            })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            passwordMessage.textContent =
+                result.error || "Unable to change password.";
+            return;
+        }
+
+        passwordMessage.textContent =
+            result.message || "Password changed successfully.";
+
+        changePasswordForm.reset();
+
+        showMessage(
+            result.message || "Password changed successfully.",
+            "success"
+        );
+
+        setTimeout(() => {
+            closePasswordPopup();
+        }, 1000);
+
+    } catch (error) {
+        passwordMessage.textContent =
+            "A network error occurred. Please try again.";
+    } finally {
+        submitPasswordButton.disabled = false;
+        submitPasswordButton.textContent = "Update Password";
+    }
+});
+
+document.querySelectorAll(".toggle-password").forEach((button) => {
+    button.addEventListener("click", () => {
+        const input = document.getElementById(button.dataset.target);
+
+        if (!input) return;
+
+        const isVisible = input.type === "text";
+
+        input.type = isVisible ? "password" : "text";
+        button.textContent = isVisible ? "Show" : "Hide";
+        button.setAttribute("aria-pressed", String(!isVisible));
+
+        const fieldName = {
+            "current-password": "current",
+            "new-password": "new",
+            "confirm-password": "confirmation"
+        }[input.id];
+
+        button.setAttribute(
+            "aria-label",
+            `${isVisible ? "Show" : "Hide"} ${fieldName} password`
+        );
+    });
+});
+
+/* #===========================# Account Deletion #===========================# */
+const deleteAccountModal = document.getElementById(
+    "delete-account-modal"
+);
+
+const openDeleteAccountButton = document.getElementById(
+    "open-delete-account"
+);
+
+const closeDeleteAccountButton = document.getElementById(
+    "close-delete-account"
+);
+
+const cancelDeleteAccountButton = document.getElementById(
+    "cancel-delete-account"
+);
+
+const deleteAccountForm = document.getElementById(
+    "delete-account-form"
+);
+
+const deleteAccountPassword = document.getElementById(
+    "delete-account-password"
+);
+
+const deleteAccountMessage = document.getElementById(
+    "delete-account-message"
+);
+
+const confirmDeleteAccountButton = document.getElementById(
+    "confirm-delete-account"
+);
+
+
+// Open the popup
+openDeleteAccountButton.addEventListener("click", () => {
+    deleteAccountModal.classList.add("is-open");
+    deleteAccountModal.setAttribute("aria-hidden", "false");
+
+    deleteAccountMessage.textContent = "";
+    deleteAccountMessage.className = "delete-account-message";
+
+    deleteAccountPassword.value = "";
+
+    deleteAccountPassword.focus();
+});
+
+
+// Close the popup
+function closeDeleteAccountModal() {
+    if (confirmDeleteAccountButton.disabled) {
+        return;
+    }
+
+    deleteAccountModal.classList.remove("is-open");
+    deleteAccountModal.setAttribute("aria-hidden", "true");
+
+    deleteAccountPassword.value = "";
+    deleteAccountMessage.textContent = "";
+    deleteAccountMessage.className = "delete-account-message";
+}
+
+closeDeleteAccountButton.addEventListener(
+    "click",
+    closeDeleteAccountModal
+);
+
+cancelDeleteAccountButton.addEventListener(
+    "click",
+    closeDeleteAccountModal
+);
+
+
+// Close when clicking the backdrop
+deleteAccountModal.addEventListener("click", (event) => {
+    if (event.target === deleteAccountModal) {
+        closeDeleteAccountModal();
+    }
+});
+
+
+// Close with Escape
+document.addEventListener("keydown", (event) => {
+    if (
+        event.key === "Escape" &&
+        deleteAccountModal.classList.contains("is-open")
+    ) {
+        closeDeleteAccountModal();
+    }
+});
+
+
+// Display a message inside the popup
+function showDeleteAccountMessage(message, type) {
+    deleteAccountMessage.textContent = message;
+    deleteAccountMessage.className =
+        `delete-account-message is-visible is-${type}`;
+}
+
+
+// Submit the deletion request
+deleteAccountForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const password = deleteAccountPassword.value;
+
+    if (!password) {
+        showDeleteAccountMessage(
+            "Please enter your current password.",
+            "error"
+        );
+        deleteAccountPassword.focus();
+        return;
+    }
+
+    confirmDeleteAccountButton.disabled = true;
+    cancelDeleteAccountButton.disabled = true;
+    closeDeleteAccountButton.disabled = true;
+
+    confirmDeleteAccountButton.textContent = "Deleting account...";
+
+    try {
+        const response = await fetch("/api/auth/delete-account", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            credentials: "same-origin",
+            body: JSON.stringify({
+                password: password
+            })
+        });
+
+        const result = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+            showDeleteAccountMessage(
+                result.error || "Unable to delete your account. Please try again.",
+                "error"
+            );
+            return;
+        }
+
+        showDeleteAccountMessage(
+            result.message || "Your account has been deleted successfully.",
+            "success"
+        );
+
+        showMessage(
+            result.message || "Your account has been deleted successfully.",
+            "success"
+        );
+
+        deleteAccountPassword.value = "";
+
+        // Allow the success message to appear before redirecting.
+        setTimeout(() => {
+            window.location.replace("/signin");
+        }, 1500);
+
+    } catch (error) {
+        console.error("Account deletion request failed:", error);
+
+        showDeleteAccountMessage(
+            "A network error occurred. Please check your connection and try again.",
+            "error"
+        );
+
+    } finally {
+        // Keep the buttons disabled after a successful deletion.
+        // The page will redirect to the login screen.
+        if (!deleteAccountMessage.classList.contains("is-success")) {
+            confirmDeleteAccountButton.disabled = false;
+            cancelDeleteAccountButton.disabled = false;
+            closeDeleteAccountButton.disabled = false;
+
+            confirmDeleteAccountButton.textContent =
+                "Permanently Delete Account";
+        }
+    }
+});
 
 
 
 /* #===========================# Start Drive #===========================# */
 
 restoreFolderNavigation();
+loadAccountCard();
 
 /* #===========================# End Drive #===========================# */

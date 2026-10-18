@@ -1,10 +1,8 @@
 from app.extensions import db
 
-'''
-#============================#
-        Session Tables
-#============================#
-'''
+
+### Session Tables ###
+
 class Session(db.Model):
 
     id = db.Column(

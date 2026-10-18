@@ -7,11 +7,8 @@ def create_app():
 
     app = Flask(__name__)
 
-    '''
-    #============================#
-       Flask config
-    #============================#
-    '''
+    
+   ### Flask config ###
     app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY")
 
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///cloud_drive.db"
@@ -22,39 +19,40 @@ def create_app():
     app.config["MAIL_PORT"] = 587
     app.config["MAIL_USERNAME"] = os.environ.get("MAIL_USERNAME")
     app.config["MAIL_PASSWORD"] = os.environ.get("MAIL_PASSWORD")
-
+    app.config["FRONTEND_URL"] = os.environ.get(
+        "FRONTEND_URL",
+        "http://127.0.0.1:5000"
+    )
 
     db.init_app(app)
     mail.init_app(app)
 
     load_dotenv()
 
-    '''
-    #============================#
-       Flask Blue Prints
-    #============================#
-    '''
+    
+   ### Flask Blue Prints ###
     from app.main import main_bp
     from app.routes.auth import auth_bp
     from app.routes.folder import folder_bp
     from app.routes.file import file_bp
+    from app.routes.browse import browse_bp
+    from app.routes.trash import trash_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(folder_bp)
     app.register_blueprint(file_bp)
+    app.register_blueprint(browse_bp)
+    app.register_blueprint(trash_bp)
 
-    '''
-    #============================#
-       Databases
-    #============================#
-    '''
+    
+   ### Databases ###
     from app.models.user import User
     from app.models.session import Session
     from app.models.folder import Folder
     from app.models.file import File
     from app.models.email_verification_token import EmailVerificationToken
-
+    from app.models.password_reset_token import PasswordResetToken
 
     with app.app_context():
         db.create_all()

@@ -1,6 +1,7 @@
-# MyCloud by ms3 v1.2.0
+# MyCloud by ms3 1.2
 
-Build your own cloud using MyCloud by ms3 project. what you can do with MyCloud create folder, upload you files, copy, move, delete etc... with total infrastructure freedom.
+Build your own cloud using MyCloud by ms3 project. what you can do with MyCloud create folder, upload you files, copy, move,
+delete with total infrastructure freedom.
 
 ## Current Features
 

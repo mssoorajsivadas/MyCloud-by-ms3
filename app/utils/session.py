@@ -6,31 +6,22 @@ import ipaddress
 from flask import request
 from app.utils.email_verification import is_verification_grace_period_expired
 from app.extensions import db
+from app.models.user import User
 from app.models.session import Session
 
 
-'''
-#============================#
-   Session Exprie D&T
-#============================#
-'''
+
+### Session Exprie D&T ###
 SESSION_IDLE_DAYS = 90
 SESSION_MAX_DAYS = 365
 
 SECURITY_CHECK_INTERVAL = 5 * 60
 SUSPICIOUS_CHANGE_WINDOW = 10 * 60
 
-'''
-#============================#
-    Session Helper
-#============================#
-'''
 
-'''
-----------------------------
- Browser Finder
-----------------------------
-'''
+### Session Helper ###
+
+##Browser Finder
 def detect_browser(user_agent):
 
     if "Firefox/" in user_agent:
@@ -47,11 +38,8 @@ def detect_browser(user_agent):
 
     return "Unknown"
 
-'''
-----------------------------
- OS Finder
-----------------------------
-'''
+
+##OS Finder
 def detect_os(user_agent):
 
     if "Windows NT" in user_agent:
@@ -71,11 +59,8 @@ def detect_os(user_agent):
 
     return "Unknown"
 
-'''
-----------------------------
- Device Finder
-----------------------------
-'''
+
+##Device Finder
 def detect_device(user_agent):
 
     if "Mobile" in user_agent or "Android" in user_agent:
@@ -87,11 +72,8 @@ def detect_device(user_agent):
     return "Desktop"
 
 
-'''
-----------------------------
- Session info Finder
-----------------------------
-'''
+
+##Session info Finder
 def get_client_info():
     user_agent = request.headers.get("User-Agent", "")
 
@@ -103,11 +85,8 @@ def get_client_info():
         "device": detect_device(user_agent)
     }
 
-'''
-----------------------------
-|  Session ip location API |
-----------------------------
-'''
+
+##Session ip location API 
 def get_ip_location(ip_address):
 
     if not ip_address:
@@ -137,11 +116,8 @@ def get_ip_location(ip_address):
     except (ValueError, requests.RequestException):
         return None
     
-'''
-#============================#
-   Create Session
-#============================#
-'''
+
+### Create Session ###
 def create_session(user):
 
     now = datetime.now(timezone.utc).replace(tzinfo=None)
@@ -197,18 +173,16 @@ def create_session(user):
 
     return session_token
 
-'''
-#============================#
-   Get Session
-#============================#
-'''
-def get_current_session():
 
+### Get Session ###
+def get_current_session():
+    # 1. Read the session token from the browser cookie.
     session_token = request.cookies.get("session_token")
 
     if not session_token:
         return None
 
+    # 2. Hash the token before looking it up in the database.
     session_token_hash = hashlib.sha256(
         session_token.encode()
     ).hexdigest()
@@ -217,39 +191,45 @@ def get_current_session():
         session_token_hash=session_token_hash
     ).first()
 
-    if not current_session:
+    # 3. Reject unknown or revoked sessions.
+    if not current_session or current_session.revoked:
         return None
 
-    if current_session.revoked:
-        return None
-
+    # 4. Check both expiration limits.
     now = datetime.now(timezone.utc).replace(tzinfo=None)
 
-    if now >= current_session.absolute_expires_at:
-
+    if (
+        now >= current_session.absolute_expires_at
+        or now >= current_session.idle_expires_at
+    ):
         current_session.revoked = True
         current_session.revoked_at = now
 
         db.session.commit()
-
         return None
 
-    if now >= current_session.idle_expires_at:
+    # 5. Confirm that the associated account still exists.
+    user = db.session.get(User, current_session.user_id)
 
+    if not user:
         current_session.revoked = True
         current_session.revoked_at = now
 
         db.session.commit()
+        return None
 
+    # 6. Reject disabled or soft-deleted accounts.
+    if user.status != "active" or user.deleted_at is not None:
+        current_session.revoked = True
+        current_session.revoked_at = now
+
+        db.session.commit()
         return None
 
     return current_session
 
-'''
-#============================#
-   Session Security Check
-#============================#
-'''
+
+### Session Security Check ###
 def check_session_security(current_session):
 
     client_info = get_client_info()

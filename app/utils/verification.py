@@ -6,13 +6,9 @@ from app.extensions import db
 from app.models.email_verification_token import EmailVerificationToken
 from app.utils.email import send_verification_email
 
-'''
-#=============================#
 
-    Email Verify Mail Sender
 
-#=============================#
-'''
+### Email Verify Mail Sender ###
 def send_verification_email_for_user(user):
 
     now = datetime.now(timezone.utc).replace(tzinfo=None)
@@ -58,14 +54,7 @@ def send_verification_email_for_user(user):
 
     return True
 
-
-'''
-#================================#
-
-    Verify Mail Expired Checker
-
-#================================#
-'''
+### Verify Mail Expired Checker ###
 def mark_expired_verification_tokens():
     now = datetime.now(timezone.utc).replace(tzinfo=None)
 

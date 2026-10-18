@@ -1,8 +1,16 @@
-import re
+from email_validator import validate_email, EmailNotValidError
 
 
 def is_valid_email(email):
+    if not isinstance(email, str):
+        return False
 
-    pattern = r"^[^@\s]+@[^@\s]+\.[^@\s]+$"
+    try:
+        validate_email(
+            email,
+            check_deliverability=False
+        )
+        return True
 
-    return re.match(pattern, email) is not None
+    except EmailNotValidError:
+        return False

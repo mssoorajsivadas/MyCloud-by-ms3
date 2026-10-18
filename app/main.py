@@ -3,65 +3,31 @@ from app.utils.session import get_current_session
 
 main_bp = Blueprint("main", __name__)
 
-
-'''
-#============================#
-
-    Landing Page
-
-#============================#
-'''
+##lunching site
 @main_bp.route("/")
 def home():
 
     return render_template("main.html")
 
-
-'''
-#============================#
-
-    Signup Page
-
-#============================#
-'''
+##signup site
 @main_bp.route("/signup")
 def signup():
 
     return render_template("signup.html")
 
-
-'''
-#============================#
-
-    Signin Page
-
-#============================#
-'''
+##signin site
 @main_bp.route("/signin")
 def signin():
 
     return render_template("signin.html")
 
-
-'''
-#============================#
-
-    Email Verify Page
-
-#============================#
-'''
+##verify email site
 @main_bp.route("/verify-email")
 def verify_email_page():
 
     return render_template("verify-email.html")
 
-'''
-#============================#
-
-    Drive Page
-
-#============================#
-'''
+##drive site
 @main_bp.route("/drive")
 def drive_page():
 
@@ -71,3 +37,15 @@ def drive_page():
         return redirect(url_for("main.signin"))
 
     return render_template("drive.html")
+
+##reset password site
+@main_bp.route("/reset-password")
+def password_reset():
+
+    return render_template("reset_password.html")
+
+##forgot password site
+@main_bp.route("/forgot-password")
+def password_forgot():
+
+    return render_template("forgot_password.html")

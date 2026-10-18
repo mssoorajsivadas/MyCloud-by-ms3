@@ -4,9 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='assets/images/logo/mycloud-logo.svg') }}">
     <title>Login page</title>
-    <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+
     <style>
         /* Light theme — default */
         :root {
@@ -79,6 +79,39 @@
 
             --message-info-bg: #1E3A8A;
             --message-info-text: #BFDBFE;
+        }
+
+        @font-face {
+            font-family: "Material Symbols Rounded";
+            src: url("{{ url_for('static', filename='fonts/material-symbols-rounded.woff2') }}") format("woff2");
+            font-weight: 100 700;
+            font-style: normal;
+            font-display: block;
+        }
+
+        .material-symbols-rounded {
+            font-family: "Material Symbols Rounded";
+            font-weight: normal;
+            font-style: normal;
+            font-size: 24px;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            display: inline-block;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
+            -webkit-font-feature-settings: "liga";
+            -webkit-font-smoothing: antialiased;
+            font-feature-settings: "liga";
+        }
+
+        @font-face {
+            font-family: "Roboto";
+            src: url("{{ url_for('static', filename='fonts/Roboto-VariableFont_wdth,wght.ttf') }}") format("truetype");
+            font-weight: 100 900;
+            font-style: normal;
+            font-display: swap;
         }
 
         * {
@@ -301,31 +334,63 @@
             background: var(--color-hover-state);
         }
 
-        .drive-name {
+        .logo-holder {
             position: absolute;
+            top: 10px;
+            left: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
 
+        .drive-name {
             display: flex;
             align-items: end;
             gap: 3px;
 
-            top: 10px;
-            left: 20px;
-            cursor: pointer;
-
+            position: relative;
+            top: -10px;
+            user-select: none;
             font-size: 12px;
+        }
+
+        .drive-name h1,
+        .drive-name p {
+            margin-bottom: 0;
         }
 
         .drive-name p {
             color: var(--color-text-secondary);
+        }
+
+        .forgot-password-link {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 8px;
+            margin-bottom: 18px;
+        }
+
+        .forgot-password-link a {
+            color: var(--color-accent);
+            font-size: 13px;
+            text-decoration: none;
+        }
+
+        .forgot-password-link a:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
 
 <body>
 
-    <div class="drive-name" onclick="window.location.href='/'">
-        <h1>MyCloud</h1>
-        <p>by ms3</p>
+    <div class="logo-holder">
+        <img style="width: 80px; height: auto;"
+            src="{{ url_for('static', filename='assets/images/logo/mycloud-logo-v1.svg') }}" alt="logo">
+        <div class="drive-name" id="brand-home" title="Go to MyCloud">
+            <h1>MyCloud</h1>
+            <p>by ms3</p>
+        </div>
     </div>
 
     <button class="theme" id="theme-toggle" type="button" aria-label="Switch to dark theme">
@@ -346,9 +411,8 @@
                 <div class="form-group">
                     <label for="username">Username / Email</label>
 
-                    <input type="text" id="username" name="username" autocomplete="username" autocomplete="off"
-                        placeholder="Choose a username or email" minlength="3" maxlength="30" pattern="[A-Za-z0-9_]+"
-                        required>
+                    <input type="text" id="username" name="login" autocomplete="username" autocomplete="off"
+                        placeholder="Choose a username or email" required>
                 </div>
 
                 <div class="form-group">
@@ -359,10 +423,14 @@
                         <input type="password" id="password" name="password" autocomplete="new-password"
                             placeholder="Enter your password" minlength="8" required>
 
+
                         <button type="button" class="show-password" id="show-password">
                             Show
                         </button>
 
+                    </div>
+                    <div class="forgot-password-link">
+                        <a href="/forgot-password">Forgot password?</a>
                     </div>
                 </div>
 

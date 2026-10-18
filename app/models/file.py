@@ -1,10 +1,8 @@
 from app.extensions import db
 
-'''
-#============================#
-        Files Tables
-#============================#
-'''
+
+### Files Tables ###
+
 class File(db.Model):
 
     id = db.Column(
@@ -33,6 +31,11 @@ class File(db.Model):
         default="other"
     )
 
+    thumbnail_name = db.Column(
+        db.String(255),
+        nullable=True
+    )
+
     user_id = db.Column(
         db.Integer,
         nullable=False
@@ -41,4 +44,10 @@ class File(db.Model):
     folder_id = db.Column(
         db.Integer,
         nullable=True
+    )
+
+    deleted_at = db.Column(
+        db.DateTime, 
+        nullable=True, 
+        default=None
     )

@@ -4,10 +4,43 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SecondCloud</title>
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='assets/images/logo/mycloud-logo.svg') }}">
+  <title>MyCLoud</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/drive.css') }}">
-  <link rel="stylesheet"
-    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <style>
+    @font-face {
+      font-family: "Material Symbols Rounded";
+      src: url("{{ url_for('static', filename='fonts/material-symbols-rounded.woff2') }}") format("woff2");
+      font-weight: 100 700;
+      font-style: normal;
+      font-display: block;
+    }
+
+    .material-symbols-rounded {
+      font-family: "Material Symbols Rounded";
+      font-weight: normal;
+      font-style: normal;
+      font-size: 24px;
+      line-height: 1;
+      letter-spacing: normal;
+      text-transform: none;
+      display: inline-block;
+      white-space: nowrap;
+      word-wrap: normal;
+      direction: ltr;
+      -webkit-font-feature-settings: "liga";
+      -webkit-font-smoothing: antialiased;
+      font-feature-settings: "liga";
+    }
+
+    @font-face {
+      font-family: "Roboto";
+      src: url("{{ url_for('static', filename='fonts/Roboto-VariableFont_wdth,wght.ttf') }}") format("truetype");
+      font-weight: 100 900;
+      font-style: normal;
+      font-display: swap;
+    }
+  </style>
 </head>
 
 <body>
@@ -18,15 +51,58 @@
         <button class="topbat-menu-button" id="left-sidebar-toggle">
           <span class="material-symbols-rounded"> notes </span>
         </button>
-        <div class="drive-name" onclick="window.location.href='/'">
-          <h1>MyCloud</h1>
-          <p>by ms3</p>
+        <div class="drive-name" style="user-select: none;">
+          <img src="{{ url_for('static', filename='assets/images/logo/mycloud-logo-v1.svg') }}" alt="logo">
+          <div>
+            <h1>MyCloud</h1>
+            <p>by ms3</p>
+          </div>
         </div>
       </div>
       <nav class="topbar-right-side">
-        <button class="topbat-menu-button">
-          <span class="material-symbols-rounded"> search </span>
-        </button>
+        <div class="topbar-search-container" id="topbar-search-container">
+          <div class="search-filter-menu" id="search-filter-menu" hidden>
+            <button type="button" id="search-filter-toggle" class="search-filter-toggle" aria-expanded="false"
+              aria-haspopup="true">
+              <span class="material-symbols-rounded">filter_list</span>
+              <span>Filter</span>
+              <span class="material-symbols-rounded">expand_more</span>
+            </button>
+
+            <div class="search-filter-dropdown" id="search-filter-dropdown" hidden>
+              <button type="button" class="search-filter-option active" data-type="all">
+                All
+              </button>
+              <button type="button" class="search-filter-option" data-type="image">
+                Images
+              </button>
+              <button type="button" class="search-filter-option" data-type="video">
+                Videos
+              </button>
+              <button type="button" class="search-filter-option" data-type="pdf">
+                PDFs
+              </button>
+              <button type="button" class="search-filter-option" data-type="document">
+                Documents
+              </button>
+            </div>
+          </div>
+
+          <div class="search-bar" id="search-bar">
+            <input type="search" id="drive-search-input" placeholder="Search files and folders..."
+              aria-label="Search files and folders" autocomplete="off">
+
+            <button type="button" id="search-close" class="search-close" aria-label="Close search">
+              <span class="material-symbols-rounded">close</span>
+            </button>
+          </div>
+
+          <button class="topbat-menu-button" id="search-toggle" type="button" aria-label="Open search"
+            aria-expanded="false">
+            <span class="material-symbols-rounded">search</span>
+          </button>
+
+        </div>
         <button class="topbat-menu-button" id="theme-toggle" type="button" aria-label="Switch to dark theme">
           <span id="theme-icon" class="material-symbols-rounded"> dark_mode </span>
         </button>
@@ -65,37 +141,37 @@
 
       <div class="left-sidebar">
         <nav>
-          <button class="sidebar-menu-button">
+          <button class="sidebar-menu-button active" data-section="home">
             <span class="material-symbols-rounded"> home </span>
             <span class="label">Home</span>
           </button>
 
-          <button class="sidebar-menu-button">
+          <button class="sidebar-menu-button" data-section="gallery">
             <span class="material-symbols-rounded"> camera </span>
             <span class="label">Gallery</span>
           </button>
 
-          <button class="sidebar-menu-button">
+          <button class="sidebar-menu-button " data-section="mydrive">
             <span class="material-symbols-rounded"> files </span>
             <span class="label">My Drive</span>
           </button>
 
-          <button class="sidebar-menu-button">
+          <button class="sidebar-menu-button" data-section="documents">
             <span class="material-symbols-rounded"> docs </span>
             <span class="label">Documents</span>
           </button>
 
-          <button class="sidebar-menu-button">
+          <button class="sidebar-menu-button" data-section="images">
             <span class="material-symbols-rounded"> photo_library </span>
             <span class="label">Images</span>
           </button>
 
-          <button class="sidebar-menu-button">
+          <button class="sidebar-menu-button" data-section="videos">
             <span class="material-symbols-rounded"> animated_images </span>
             <span class="label">Videos</span>
           </button>
 
-          <button class="sidebar-menu-button">
+          <button class="sidebar-menu-button" data-section="trash">
             <span class="material-symbols-rounded"> delete </span>
             <span class="label">Trash</span>
           </button>
@@ -108,90 +184,520 @@
             <span class="material-symbols-rounded"> notifications </span>
           </button>
 
-          <button class="sidebar-menu-button">
+          <button class="sidebar-menu-button" data-section="help">
             <span class="material-symbols-rounded"> help </span>
             <span class="label">Help</span>
           </button>
 
-          <button class="sidebar-menu-button">
+          <button class="sidebar-menu-button" data-section="storage">
             <span class="material-symbols-rounded"> home_storage </span>
             <span class="label">Storage</span>
           </button>
 
-          <button class="sidebar-menu-button">
+          <button class="sidebar-menu-button" data-section="settings">
             <span class="material-symbols-rounded"> settings </span>
             <span class="label">Settings</span>
           </button>
         </nav>
       </div>
 
-      <section class="mydrive">
-        <div class="mydrive-tools">
-          <div class="breadcrumb">
+      <div class="holder">
 
-            <button class="breadcrumb-back-button" id="back-button">
-              <span class="material-symbols-rounded"> arrow_back_ios </span>
-            </button>
+        <section class="drive-section active" id="home">
+          <div class="home-cantaner">
+            <div class="home-content">
+              <h1>Welcome to MyCloud</h1>
+              <p>V2.0.0</p>
+            </div>
 
-            <span class="breadcrumb-label">|</span>
-
-            <nav class="drive-path" id="breadcrumb">
-
-              <!-- breadcrumb -->
-
-            </nav>
-
-          </div>
-          <div class="mydrive-action-tools-button">
-            <button class="new-bt" id="add-button">
-              <span class="material-symbols-rounded">add</span>
-              <span class="addbt-lable">Add</span>
-            </button>
-
-            <div class="add-menu" id="add-menu">
-
-              <button type="button" class="add-menu-item" id="New-folder-button">
-
-                <span class="material-symbols-rounded">create_new_folder</span>
-                New Folder
-
-              </button>
-
-              <button type="button" class="add-menu-item" id="upload-file-button">
-
-                <span class="material-symbols-rounded">upload</span>
-                Upload File
-
-              </button>
-              <input type="file" id="file-input" hidden>
-
+            <div class="grid-container">
+              <div class="card" data-section="documents">
+                <span class="material-symbols-rounded">
+                  folder_open
+                </span>
+                <h1>Document</h1>
+              </div>
+              <div class="card" data-section="images">
+                <span class="material-symbols-rounded">
+                  folder_open
+                </span>
+                <h1>Images</h1>
+              </div>
+              <div class="card" data-section="videos">
+                <span class="material-symbols-rounded">
+                  folder_open
+                </span>
+                <h1>Videos</h1>
+              </div>
             </div>
           </div>
-        </div>
+        </section>
 
-        <div class="sorting">
-          <h1> Folders & Files </h1>
-        </div>
+        <section class="drive-section" id="gallery">
+          <section class="gallery">
+            <div class="gallery-header">
+              <div>
+                <h2>Gallery</h2>
+                <p>Your images and videos in one place</p>
+              </div>
 
-        <div class="mydrive-container">
+              <div class="gallery-filters">
+                <button class="gallery-filter active" data-filter="all">
+                  All
+                </button>
+                <button class="gallery-filter" data-filter="image">
+                  Images
+                </button>
+                <button class="gallery-filter" data-filter="video">
+                  Videos
+                </button>
+              </div>
+            </div>
 
-          <!-- FOLDERS -->
-          <div class="folder-list" id="folder-list">
+            <div id="gallery-message" class="gallery-message">
+              Loading your gallery...
+            </div>
+
+            <div id="gallery-grid" class="gallery-grid"></div>
+          </section>
+        </section>
+
+        <section class="drive-section" id="mydrive">
+          <div class="mydrive-tools">
+            <div class="breadcrumb">
+
+              <button class="breadcrumb-back-button" id="back-button">
+                <span class="material-symbols-rounded"> arrow_back_ios </span>
+              </button>
+
+              <span class="breadcrumb-label">|</span>
+
+              <nav class="drive-path" id="breadcrumb">
+
+                <!-- breadcrumb -->
+
+              </nav>
+
+            </div>
+            <div class="mydrive-action-tools-button">
+              <button class="new-bt" id="add-button">
+                <span class="material-symbols-rounded">add</span>
+                <span class="addbt-lable">Add</span>
+              </button>
+
+              <div class="add-menu" id="add-menu">
+
+                <button type="button" class="add-menu-item" id="New-folder-button">
+
+                  <span class="material-symbols-rounded">create_new_folder</span>
+                  New Folder
+
+                </button>
+
+                <button type="button" class="add-menu-item" id="upload-file-button">
+
+                  <span class="material-symbols-rounded">upload</span>
+                  Upload File
+
+                </button>
+                <input type="file" id="file-input" hidden multiple>
+
+                <button type="button" class="add-menu-item" id="upload-folder-button">
+                  <span class="material-symbols-rounded">drive_folder_upload</span>
+                  Upload Folder
+                </button>
+
+                <input type="file" id="folder-input" webkitdirectory directory multiple hidden>
+
+              </div>
+
+              <div id="upload-progress-container" hidden>
+                <div class="upload-progress-header">
+                  <span id="upload-progress-text">Preparing upload...</span>
+                  <span id="upload-progress-percent">0%</span>
+                </div>
+
+                <div class="upload-progress-track" role="progressbar" aria-label="File upload progress"
+                  aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="upload-progress-bar">
+                  <div id="upload-progress-fill"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="sorting">
+            <h1> Folders & Files </h1>
+          </div>
+
+          <div class="mydrive-container">
+
+            <div id="search-results-info" class="search-results-info" hidden>
+              <h2 id="search-results-title"></h2>
+              <p id="search-results-count"></p>
+            </div>
+
+            <p id="search-empty-message" class="search-empty-message" hidden>
+              No files or folders found.
+            </p>
+
+            <!-- FOLDERS -->
+            <div class="folder-list" id="folder-list">
 
 
+
+            </div>
+            <!-- FILES -->
+            <div class="file-list" id="file-list">
+
+
+
+            </div>
+
+            <div id="drag-drop-overlay">
+              <div class="drag-drop-content">
+                <span class="material-symbols-rounded">cloud_upload</span>
+                <h2>Drop files to upload</h2>
+                <p>Release your files to upload them to MyCloud</p>
+              </div>
+            </div>
+            <!-- TEST CONTENT --> <!-- Remove this later -->
+
+            <div id="freespace" style="height: 700px;"></div>
+          </div>
+
+        </section>
+
+        <section class="drive-section" id="documents">
+          <div class="tittle-section">
+            <h1>Documents</h1>
+          </div>
+          <div class="documents-list" id="document-list">
 
           </div>
-          <!-- FILES -->
-          <div class="file-list" id="file-list">
+        </section>
 
-
+        <section class="drive-section" id="images">
+          <div class="tittle-section">
+            <h1>Images</h1>
+          </div>
+          <div class="images-list" id="image-list">
 
           </div>
-          <!-- TEST CONTENT --> <!-- Remove this later -->
+        </section>
 
-          <div id="freespace" style="height: 700px;"></div>
-        </div>
-      </section>
+        <section class="drive-section" id="videos">
+          <div class="tittle-section">
+            <h1>Videos</h1>
+          </div>
+          <div class="videos-list" id="video-list">
+
+          </div>
+        </section>
+
+        <section class="drive-section" id="trash">
+          <header class="section-header">
+            <div>
+              <h1>Trash</h1>
+              <p>Items in Trash are deleted automatically according to policy.</p>
+            </div>
+
+            <button type="button" id="empty-trash-button" class="danger-button">
+              <span class="material-symbols-rounded">delete_forever</span>
+              Empty Trash
+            </button>
+
+          </header>
+
+          <div id="trash-selection-toolbar" class="trash-selection-toolbar" hidden>
+            <label class="trash-select-all">
+              <input type="checkbox" id="trash-select-all-checkbox">
+              <span>Select all</span>
+            </label>
+
+            <div class="trash-selection-actions">
+              <button type="button" id="restore-selected-button" class="restore-selected-button">
+                <span class="material-symbols-rounded">restore</span>
+                Restore selected
+              </button>
+
+              <button type="button" id="delete-selected-button" class="delete-selected-button">
+                <span class="material-symbols-rounded">delete_forever</span>
+                Delete selected
+              </button>
+            </div>
+          </div>
+
+          <div class="trash-toolbar">
+            <div class="trash-navigation">
+              <button type="button" id="trash-back-button" disabled>
+                <span class="material-symbols-rounded">arrow_back</span>
+              </button>
+
+              <span>|</span>
+
+              <nav id="trash-breadcrumb" aria-label="Trash breadcrumb">
+              </nav>
+            </div>
+          </div>
+
+          <div class="trash-items">
+            <div id="trash-folder-list"></div>
+            <div id="trash-file-list"></div>
+          </div>
+
+          <div class="trash-empty-state" id="trash-empty-state" hidden>
+            <span class="material-symbols-rounded">delete_sweep</span>
+            <h2>Trash is empty</h2>
+            <p>Deleted files and folders will appear here.</p>
+          </div>
+        </section>
+
+        <section class="drive-section" id="help">
+          <div class="about-holder">
+            <div class="about">
+              <div class="drive-name">
+                <img id="logo-size" src="{{ url_for('static', filename='assets/images/logo/mycloud-logo-v1.svg') }}"
+                  alt="logo">
+                <div>
+                  <h1>MyCloud</h1>
+                  <p>by ms3</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="about-content">
+              <h1>About</h1>
+              <p>Build your own cloud using MyCloud by ms3 project. what you can do with MyCloud create folder, upload
+                you
+                files, copy, move,
+                delete with total infrastructure freedom.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="drive-section" id="storage">
+          <div class="storage-holder">
+            <!-- MyCloud Storage -->
+            <section class="storage-card">
+              <div class="storage-header">
+                <span class="material-symbols-rounded" aria-hidden="true">
+                  cloud
+                </span>
+
+                <div>
+                  <h2>MyCloud Storage</h2>
+                  <p>Overview of your storage usage</p>
+                </div>
+              </div>
+
+              <div class="storage-main">
+                <span class="storage-label">MyCloud system storage used</span>
+                <h3 id="mycloud-storage-used">Loading...</h3>
+              </div>
+
+              <div class="storage-details">
+                <div class="storage-item">
+                  <span class="storage-label">Total disk space</span>
+                  <strong id="disk-total">Loading...</strong>
+                </div>
+
+                <div class="storage-item">
+                  <span class="storage-label">Available space</span>
+                  <strong id="disk-available">Loading...</strong>
+                </div>
+
+                <div class="storage-item">
+                  <span class="storage-label">Your files</span>
+                  <strong id="user-storage-used">Loading...</strong>
+                </div>
+
+                <div class="storage-item">
+                  <span class="storage-label">Other storage</span>
+                  <strong id="other-storage-used">Loading...</strong>
+                </div>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section class="drive-section" id="settings">
+          <div class="account-card-holder">
+            <section class="account-card">
+              <div class="account-card-header">
+                <div class="account-avatar">
+                  <span class="material-symbols-rounded">person</span>
+                </div>
+
+                <div class="account-heading">
+                  <h2>My Account</h2>
+                  <p>Your personal information</p>
+                </div>
+
+                <button type="button" class="account-edit-button" id="account-edit-button">
+                  <span class="material-symbols-rounded">edit</span>
+                  <span>Edit</span>
+                </button>
+              </div>
+
+              <div class="account-details">
+                <div class="account-field">
+                  <span class="account-label">First name</span>
+                  <span class="account-value" id="account-first-name">Loading...</span>
+                </div>
+
+                <div class="account-field">
+                  <span class="account-label">Second name</span>
+                  <span class="account-value" id="account-second-name">Loading...</span>
+                </div>
+
+                <div class="account-field">
+                  <span class="account-label">Email address</span>
+                  <span class="account-value" id="account-email">Loading...</span>
+                </div>
+
+                <div class="account-field">
+                  <span class="account-label">Email verification</span>
+                  <span class="verification-status" id="account-email-status">
+                    Loading...
+                  </span>
+                </div>
+              </div>
+            </section>
+
+            <!-- Change Password Card -->
+            <div class="password-card">
+              <div class="password-card-info">
+                <h3>Change Password</h3>
+                <p>Keep your account secure with a strong password.</p>
+
+                <div class="password-decoration" aria-hidden="true">
+                  <span>••••••••••••</span>
+                  <span class="password-lock">🔒</span>
+                </div>
+              </div>
+
+              <button type="button" class="change-password-btn" id="open-password-modal">
+                Change Password
+              </button>
+            </div>
+
+            <!-- Account Deletion Card -->
+            <section class="account-danger-card">
+              <div class="account-danger-info">
+                <h3>Delete Account</h3>
+
+                <p>
+                  Permanently delete your account and all associated files
+                  and folders. This action cannot be undone.
+                </p>
+              </div>
+
+              <button type="button" id="open-delete-account" class="delete-account-button">
+                Delete Account
+              </button>
+            </section>
+
+
+            <!-- Delete Account Popup -->
+            <div id="delete-account-modal" class="delete-account-modal" aria-hidden="true">
+              <div class="delete-account-dialog" role="dialog" aria-modal="true" aria-labelledby="delete-account-title">
+                <button type="button" id="close-delete-account" class="delete-account-close" aria-label="Close dialog">
+                  &times;
+                </button>
+
+                <div class="delete-account-icon" aria-hidden="true">
+                  !
+                </div>
+
+                <h2 id="delete-account-title">Delete your account?</h2>
+
+                <p class="delete-account-warning">
+                  This will permanently delete your account's files and folders.
+                  Your account will be marked as deleted, and you will be signed out.
+                </p>
+
+                <form id="delete-account-form">
+                  <label for="delete-account-password">
+                    Current password
+                  </label>
+
+                  <input type="password" id="delete-account-password" name="password"
+                    placeholder="Enter your current password" autocomplete="current-password" required>
+
+                  <p id="delete-account-message" class="delete-account-message" role="status" aria-live="polite"></p>
+
+                  <div class="delete-account-actions">
+                    <button type="button" id="cancel-delete-account" class="delete-account-cancel">
+                      Cancel
+                    </button>
+
+                    <button type="submit" id="confirm-delete-account" class="delete-account-confirm">
+                      Permanently Delete Account
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <!-- Change Password Popup -->
+            <div class="password-modal-overlay" id="password-modal-overlay" hidden>
+              <div class="password-modal" role="dialog" aria-modal="true" aria-labelledby="password-modal-title">
+
+                <button type="button" class="password-modal-close" id="close-password-modal" aria-label="Close popup">
+                  &times;
+                </button>
+
+                <h2 id="password-modal-title">Change Password</h2>
+                <p>Enter your current password and choose a new one.</p>
+
+                <form id="change-password-form">
+                  <label for="current-password">Current Password</label>
+                  <div class="password-input-wrapper">
+                    <input type="password" id="current-password" name="current_password" autocomplete="current-password"
+                      required>
+                    <button type="button" class="toggle-password" data-target="current-password"
+                      aria-label="Show current password" aria-pressed="false">
+                      Show
+                    </button>
+                  </div>
+
+                  <label for="new-password">New Password</label>
+                  <div class="password-input-wrapper">
+                    <input type="password" id="new-password" name="new_password" autocomplete="new-password" required>
+                    <button type="button" class="toggle-password" data-target="new-password"
+                      aria-label="Show new password" aria-pressed="false">
+                      Show
+                    </button>
+                  </div>
+
+                  <label for="confirm-password">Confirm New Password</label>
+                  <div class="password-input-wrapper">
+                    <input type="password" id="confirm-password" name="confirm_password" autocomplete="new-password"
+                      required>
+                    <button type="button" class="toggle-password" data-target="confirm-password"
+                      aria-label="Show confirmation password" aria-pressed="false">
+                      Show
+                    </button>
+                  </div>
+
+                  <div class="forgot-password-link">
+                    <a href="/forgot-password">Forgot password?</a>
+                  </div>
+
+                  <p id="password-form-message" role="status" aria-live="polite"></p>
+
+                  <button type="submit" id="submit-password-change">
+                    Update Password
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+
+        </section>
+
+      </div>
+
 
       <div class="right-sidebar">
         <nav>
@@ -485,7 +991,6 @@
 
       <!-- Actions -->
       <div class="move-actions">
-        action-required-message
         <button type="button" id="cancel-move" class="move-cancel-button">
           Cancel
         </button>
@@ -504,16 +1009,206 @@
 
   <div id="action-required-message" class="popup-overlay" hidden>
     <div class="popup">
-        <button type="button" class="popup-close" id="action-required-close">
-            &times;
-        </button>
+      <button type="button" class="popup-close" id="action-required-close">
+        &times;
+      </button>
     </div>
-</div>
+  </div>
 
+  <!-- ========================= FILE PREVIEW ========================== -->
+  <!-- File Preview Modal -->
+  <div id="file-preview-modal" class="preview-modal" hidden>
+
+    <div class="preview-container">
+
+      <!-- Header -->
+      <div class="preview-header">
+
+        <div class="preview-file-info">
+          <span id="preview-file-name">File Preview</span>|
+          <span id="preview-file-size"></span>
+        </div>
+
+        <div class="preview-header-actions">
+
+          <button type="button" id="preview-download">
+            <span class="material-symbols-rounded">download</span>
+            <span>Download</span>
+          </button>
+
+          <div class="preview-menu-wrapper">
+
+            <button type="button" id="preview-menu-toggle" aria-label="More options" aria-expanded="false"
+              aria-haspopup="true">
+              <span class="material-symbols-rounded">more_vert</span>
+            </button>
+
+            <div id="preview-menu" class="preview-menu" hidden>
+              <button type="button" id="preview-details-action">
+                <span class="material-symbols-rounded">info</span>
+                File details
+              </button>
+            </div>
+
+          </div>
+
+          <button type="button" id="preview-close" class="preview-close" aria-label="Close preview">
+            &times;
+          </button>
+
+        </div>
+
+      </div>
+
+      <!-- File Content -->
+      <div class="preview-body">
+        <button type="button" id="preview-previous" class="preview-nav-button preview-previous"
+          aria-label="Previous file" disabled>
+          &#10094;
+        </button>
+
+        <div id="preview-content" class="preview-content">
+          <p id="preview-message" hidden></p>
+        </div>
+
+        <button type="button" id="preview-next" class="preview-nav-button preview-next" aria-label="Next file" disabled>
+          &#10095;
+        </button>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ========================= FILE DETAILS POPUP ========================== -->
+
+  <div id="preview-details-modal" class="preview-details-modal" hidden>
+    <div class="preview-details-panel" role="dialog" aria-modal="true" aria-labelledby="preview-details-title">
+      <div class="preview-details-header">
+        <h3 id="preview-details-title">File details</h3>
+
+        <button type="button" id="preview-details-close" aria-label="Close file details">
+          &times;
+        </button>
+      </div>
+
+      <div class="preview-details-body">
+        <div class="preview-detail-row">
+          <span>Name</span>
+          <span id="details-file-name"></span>
+        </div>
+
+        <div class="preview-detail-row">
+          <span>Size</span>
+          <span id="details-file-size"></span>
+        </div>
+
+        <div class="preview-detail-row">
+          <span>Type</span>
+          <span id="details-file-type"></span>
+        </div>
+
+        <div class="preview-detail-row">
+          <span>File ID</span>
+          <span id="details-file-id"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================= Trash Context Menu ========================== -->
+  <div class="context-menu" id="trash-context-menu" hidden>
+    <button type="button" data-action="select" id="trash-select-item">
+      <span class="material-symbols-rounded">check_box</span>
+      <span>Select</span>
+    </button>
+
+    <button type="button" data-action="restore" id="trash-restore-item">
+      <span class="material-symbols-rounded">restore</span>
+      <span>Restore</span>
+    </button>
+
+    <div class="context-divider"></div>
+
+    <button type="button" data-action="delete" id="trash-delete-item">
+      <span class="material-symbols-rounded">delete_forever</span>
+      <span>Delete permanently</span>
+    </button>
+  </div>
+
+  <!-- ========================= permanent deletion popup ========================== -->
+
+  <!-- Confirmation Modal -->
+  <div id="confirm-modal" class="confirm-modal" aria-hidden="true">
+    <div class="confirm-modal-content" role="dialog" aria-modal="true" aria-labelledby="confirm-title"
+      aria-describedby="confirm-message">
+
+      <div class="confirm-modal-icon">
+        <span class="material-symbols-rounded">warning</span>
+      </div>
+
+      <h2 id="confirm-title">Are you sure?</h2>
+
+      <p id="confirm-message">
+        Do you want to continue with this action?
+      </p>
+
+      <div class="confirm-modal-actions">
+        <button type="button" id="confirm-cancel-button">
+          Cancel
+        </button>
+
+        <button type="button" id="confirm-accept-button">
+          Confirm
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================= Account update popup ========================== -->
+
+  <div class="account-modal-overlay" id="account-edit-modal" hidden>
+    <div class="account-modal" role="dialog" aria-modal="true" aria-labelledby="account-modal-title">
+      <div class="account-modal-header">
+        <div>
+          <h2 id="account-modal-title">Edit account</h2>
+          <p>Update your personal information.</p>
+        </div>
+
+        <button type="button" class="account-modal-close" id="account-modal-close" aria-label="Close dialog">
+          <span class="material-symbols-rounded">close</span>
+        </button>
+      </div>
+
+      <form id="account-edit-form">
+        <label for="edit-first-name">First name</label>
+        <input type="text" id="edit-first-name" name="first_name" maxlength="100" required>
+
+        <label for="edit-second-name">Second name</label>
+        <input type="text" id="edit-second-name" name="second_name" maxlength="100" required>
+
+        <label for="edit-email">Email address</label>
+        <input type="email" id="edit-email" name="email" maxlength="255" required>
+
+        <p class="account-form-message" id="account-form-message" role="status" aria-live="polite"></p>
+
+        <div class="account-modal-actions">
+          <button type="button" class="account-cancel-button" id="account-edit-cancel">
+            Cancel
+          </button>
+
+          <button type="submit" class="account-confirm-button" id="account-edit-confirm">
+            Confirm changes
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 
 
   <script src="{{ url_for('static', filename='js/drive.js') }}"></script>
   <script src="{{ url_for('static', filename='js/drive_service.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/catagory.js') }}"></script>
 </body>
 
 </html>

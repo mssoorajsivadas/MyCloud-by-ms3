@@ -1,10 +1,7 @@
 from app.extensions import db
 
-'''
-#================================#
-        Email Verify Tables
-#================================#
-'''
+
+### Email Verify Tables ###
 class EmailVerificationToken(db.Model):
     id = db.Column(
         db.Integer,

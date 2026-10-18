@@ -4,290 +4,484 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='assets/images/logo/mycloud-logo.svg') }}">
+    <title>Verify Email - MyCloud</title>
 
-    <title>Verify Email - Cloud Drive</title>
-
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700&display=swap"
-        rel="stylesheet">
-    <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
 
     <style>
         :root {
-            --bg-color: #0b0f17;
-            --card-bg: rgba(18, 24, 38, 0.75);
-            --card-border: rgba(255, 255, 255, 0.08);
-            --text-main: #f3f4f6;
-            --text-muted: #9ca3af;
-            --accent: #6366f1;
-            --accent-hover: #4f46e5;
-            --success: #10b981;
-            --error: #ef4444;
+            color-scheme: light;
+
+            --color-bg-main: #f5f7fb;
+            --color-bg-card: #ffffff;
+            --color-text-primary: #1f2937;
+            --color-text-secondary: #6b7280;
+            --color-border: #e5e7eb;
+            --color-accent: #6366f1;
+            --color-accent-hover: #4f46e5;
+            --color-success: #059669;
+            --color-error: #dc2626;
+            --color-input-bg: #ffffff;
+            --color-icon-bg: #eef2ff;
+        }
+
+        [data-theme="dark"] {
+            color-scheme: dark;
+
+            --color-bg-main: #1b1b1b;
+            --color-bg-card: #242424;
+            --color-text-primary: #f3f4f6;
+            --color-text-secondary: #9ca3af;
+            --color-border: #343434;
+            --color-accent: #818cf8;
+            --color-accent-hover: #6366f1;
+            --color-success: #34d399;
+            --color-error: #f87171;
+            --color-input-bg: #101622;
+            --color-icon-bg: #252747;
+        }
+
+        @font-face {
+            font-family: "Material Symbols Rounded";
+            src: url("{{ url_for('static', filename='fonts/material-symbols-rounded.woff2') }}") format("woff2");
+            font-weight: 100 700;
+            font-style: normal;
+            font-display: block;
+        }
+
+        .material-symbols-rounded {
+            font-family: "Material Symbols Rounded";
+            font-weight: normal;
+            font-style: normal;
+            font-size: 24px;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            display: inline-block;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
+            -webkit-font-feature-settings: "liga";
+            -webkit-font-smoothing: antialiased;
+            font-feature-settings: "liga";
+        }
+
+        @font-face {
+            font-family: "Roboto";
+            src: url("{{ url_for('static', filename='fonts/Roboto-VariableFont_wdth,wght.ttf') }}") format("truetype");
+            font-weight: 100 900;
+            font-style: normal;
+            font-display: swap;
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: 'Inter', sans-serif;
         }
 
-        body.auth-page {
-            background-color: var(--bg-color);
-            color: var(--text-main);
+        body {
             min-height: 100vh;
+            min-height: 100dvh;
+            background: var(--color-bg-main);
+            color: var(--color-text-primary);
             display: flex;
             align-items: center;
             justify-content: center;
-            position: relative;
+            padding: 24px;
             overflow-x: hidden;
-            padding: 1.5rem;
+            transition: background-color 0.25s, color 0.25s;
         }
 
-        /* Ambient background glow effects */
-        .auth-page::before,
-        .auth-page::after {
-            content: '';
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(120px);
-            z-index: 0;
-            pointer-events: none;
-        }
-
-        .auth-page::before {
-            width: 350px;
-            height: 350px;
-            background: rgba(99, 102, 241, 0.15);
-            top: 15%;
-            left: 20%;
-        }
-
-        .auth-page::after {
-            width: 300px;
-            height: 300px;
-            background: rgba(16, 185, 129, 0.1);
-            bottom: 15%;
-            right: 20%;
-        }
-
-        .auth-container {
+        .page-container {
             width: 100%;
             max-width: 440px;
-            z-index: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
+            margin: auto;
         }
 
-        .auth-brand {
+        /* Header */
+
+        .page-header {
             text-align: center;
+            margin-bottom: 28px;
         }
 
-        .brand-icon {
-            font-size: 2.5rem;
-            margin-bottom: 0.5rem;
-            display: inline-block;
-        }
-
-        .auth-brand h1 {
-            font-family: 'Outfit', sans-serif;
-            font-size: 1.75rem;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            color: #ffffff;
-        }
-
-        .auth-brand p {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            margin-top: 0.25rem;
-        }
-
-        .auth-card {
-            background: var(--card-bg);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--card-border);
-            border-radius: 20px;
-            padding: 2.5rem 2rem;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-            text-align: center;
-            transition: all 0.3s ease;
-        }
-
-        .verification-icon {
-            width: 64px;
-            height: 64px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
+        .logo-holder {
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 1.5rem auto;
-            color: var(--accent);
-            transition: all 0.3s ease;
-        }
-
-        .verification-icon .material-symbols-rounded{
-            font-size: 40px;
-        }
-
-        /* Dynamic styling when JS modifies text content */
-        .verification-icon:has(span),
-        .verification-icon {
-            font-weight: bold;
-        }
-
-        .auth-header h2 {
-            font-family: 'Outfit', sans-serif;
-            font-size: 1.35rem;
-            font-weight: 600;
-            margin-bottom: 0.75rem;
-            color: #ffffff;
-        }
-
-        .auth-header p {
-            color: var(--text-muted);
-            font-size: 0.925rem;
-            line-height: 1.5;
-            margin-bottom: 1.75rem;
-        }
-
-        .auth-button {
-            display: none;
-            /* Controlled by your JS script */
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            width: 100%;
-            padding: 0.85rem 1.25rem;
-            background-color: var(--accent);
-            color: #ffffff;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 0.95rem;
-            border-radius: 12px;
-            transition: background-color 0.2s ease, transform 0.1s ease;
-            box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3);
-        }
-
-        .auth-button:hover {
-            background-color: var(--accent-hover);
-            transform: translateY(-1px);
-        }
-
-        .auth-button span {
-            transition: transform 0.2s ease;
-        }
-
-        .auth-button:hover span {
-            transform: translateX(4px);
-        }
-
-        .auth-bottom {
-            text-align: center;
-            color: var(--text-muted);
-            font-size: 0.825rem;
-            opacity: 0.8;
+            gap: 8px;
         }
 
         .drive-name {
             display: flex;
-            align-items: end;
+            align-items: baseline;
             justify-content: center;
-            gap: 3px;
+            gap: 5px;
+            margin-bottom: 8px;
+            user-select: none;
+        }
 
-            padding: 10px;
-
-            cursor: pointer;
-
-            font-size: 12px;
+        .drive-name h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 30px;
+            font-weight: 700;
+            letter-spacing: -1px;
+            color: var(--color-text-primary);
         }
 
         .drive-name p {
-            color: var(--text-muted);
+            font-size: 12px;
+            color: var(--color-text-secondary);
         }
 
-        #verify-button{
-            background: var(--accent);
-            border: none;
-            padding: 15px 20px;
-            border-radius: 50px;
-            color: #ffffff;
+        .page-subtitle {
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--color-text-secondary);
+        }
+
+        /* Theme button */
+
+        .theme-toggle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 16px;
+            padding: 8px 12px;
+            border: 1px solid var(--color-border);
+            border-radius: 10px;
+            background: var(--color-bg-card);
+            color: var(--color-text-primary);
+            font-size: 12px;
             cursor: pointer;
+            transition: background-color 0.2s, border-color 0.2s;
         }
 
-        #verify-button:hover{
-            background: var(--accent-hover);
+        .theme-toggle:hover {
+            border-color: var(--color-accent);
         }
-           
+
+        .material-symbols-rounded {
+            font-family: 'Material Symbols Rounded';
+            font-weight: normal;
+            font-style: normal;
+            font-size: 22px;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            display: inline-block;
+            white-space: nowrap;
+            direction: ltr;
+            -webkit-font-smoothing: antialiased;
+            font-feature-settings: 'liga';
+        }
+
+        /* Verification card */
+
+        .verification-card {
+            width: 100%;
+            padding: 36px 30px;
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border);
+            border-radius: 18px;
+            text-align: center;
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.06);
+            transition: background-color 0.25s, border-color 0.25s;
+        }
+
+        [data-theme="dark"] .verification-card {
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .verification-icon {
+            width: 76px;
+            height: 76px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            border-radius: 50%;
+            background: var(--color-icon-bg);
+            color: var(--color-accent);
+            transition: background-color 0.25s, color 0.25s;
+        }
+
+        .verification-icon .material-symbols-rounded {
+            font-size: 38px;
+        }
+
+        .verification-icon.success {
+            color: var(--color-success);
+        }
+
+        .verification-icon.error {
+            color: var(--color-error);
+        }
+
+        .verification-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 23px;
+            font-weight: 600;
+            line-height: 1.35;
+            color: var(--color-text-primary);
+            margin-bottom: 12px;
+        }
+
+        .verification-message {
+            color: var(--color-text-secondary);
+            font-size: 14px;
+            line-height: 1.7;
+            overflow-wrap: anywhere;
+            margin-bottom: 26px;
+        }
+
+        /* Main button */
+
+        .verification-button {
+            width: 100%;
+            min-height: 48px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            padding: 13px 18px;
+            border: none;
+            border-radius: 11px;
+            background: var(--color-accent);
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.2s, opacity 0.2s;
+        }
+
+        .verification-button:hover:not(:disabled) {
+            background: var(--color-accent-hover);
+            transform: translateY(-1px);
+        }
+
+        .verification-button:disabled {
+            cursor: not-allowed;
+            opacity: 0.65;
+        }
+
+        .verification-button .material-symbols-rounded {
+            font-size: 20px;
+        }
+
+        /* Secondary links */
+
+        .secondary-links {
+            margin-top: 22px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .secondary-links a {
+            color: var(--color-accent);
+            font-size: 13px;
+            font-weight: 500;
+            text-decoration: none;
+        }
+
+        .secondary-links a:hover {
+            text-decoration: underline;
+        }
+
+        /* Footer */
+
+        .page-footer {
+            margin-top: 24px;
+            text-align: center;
+            color: var(--color-text-secondary);
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .page-footer .material-symbols-rounded {
+            font-size: 15px;
+            vertical-align: middle;
+            margin-right: 4px;
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 18px;
+            }
+
+            .verification-card {
+                padding: 30px 22px;
+            }
+
+            .verification-title {
+                font-size: 21px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+                transition-duration: 0.01ms !important;
+            }
+        }
     </style>
 </head>
 
-<body class="auth-page">
+<body>
 
-    <div class="auth-container">
+    <main class="page-container">
 
-        <div class="auth-brand">
-            <div class="drive-name" onclick="window.location.href='/'">
-                <h1>MyCloud</h1>
-                <p>by ms3</p>
+        <header class="page-header">
+            <div class="logo-holder">
+                <img style="width: 80px; height: auto;"
+                    src="{{ url_for('static', filename='assets/images/logo/mycloud-logo-v1.svg') }}" alt="logo">
+                <div class="drive-name" id="brand-home" title="Go to MyCloud">
+                    <h1>MyCloud</h1>
+                    <p>by ms3</p>
+                </div>
             </div>
-            <p>Secure cloud storage for your files.</p>
-        </div>
 
-        <div class="auth-card verification-card">
+
+            <p class="page-subtitle">
+                Secure cloud storage for your files.
+            </p>
+
+            <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle color theme">
+
+                <span class="material-symbols-rounded" id="theme-icon">
+                    dark_mode
+                </span>
+
+                <span id="theme-label">Dark mode</span>
+            </button>
+        </header>
+
+        <section class="verification-card" aria-labelledby="verification-title">
 
             <div id="verification-icon" class="verification-icon">
-                <span class="material-symbols-rounded">
-                    mail
+                <span class="material-symbols-rounded" id="verification-symbol">
+                    mark_email_unread
                 </span>
             </div>
 
-            <div class="auth-header">
-                <h2 id="verification-title">
-                    Email Verification
-                </h2>
+            <h2 class="verification-title" id="verification-title">
+                Verify your email
+            </h2>
 
-                <p id="verification-message" role="status">
-                    Please verify your email address.
-                </p>
-            </div>
+            <p class="verification-message" id="verification-message" role="status" aria-live="polite">
 
-            <button id="verify-button" type="button">
-                Verify Email
+                Confirm your email address to finish setting up your account.
+            </p>
+
+            <button id="verify-button" class="verification-button" type="button">
+
+                <span class="material-symbols-rounded" id="button-icon">
+                    verified
+                </span>
+
+                <span id="button-label">Verify Email</span>
             </button>
-        </div>
 
-        <div class="auth-bottom">
-            🔒 Your account is protected.
-        </div>
+            <nav class="secondary-links" aria-label="Account navigation">
+                <a href="/signin">Back to Sign In</a>
+            </nav>
 
-    </div>
+        </section>
 
-    <!-- Your external JS script that contains your logic -->
+        <footer class="page-footer">
+            <span class="material-symbols-rounded">lock</span>
+            Your account and files deserve to stay secure.
+        </footer>
+
+    </main>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+
     <script>
         const verifyButton = document.getElementById("verify-button");
         const message = document.getElementById("verification-message");
+        const title = document.getElementById("verification-title");
+        const iconContainer = document.getElementById("verification-icon");
+        const icon = document.getElementById("verification-symbol");
+        const buttonIcon = document.getElementById("button-icon");
+        const buttonLabel = document.getElementById("button-label");
 
         const params = new URLSearchParams(window.location.search);
         const token = params.get("token");
 
+        let verificationStarted = false;
+
+        function showVerificationState(state, heading, text, symbol) {
+            title.textContent = heading;
+            message.textContent = text;
+            icon.textContent = "";
+            icon.appendChild(createIcon(symbol));
+
+            iconContainer.classList.remove("success", "error");
+
+            if (state === "success") {
+                iconContainer.classList.add("success");
+            } else if (state === "error") {
+                iconContainer.classList.add("error");
+            }
+        }
+
+        function createIcon(symbol) {
+            const span = document.createElement("span");
+            span.className = "material-symbols-rounded";
+            span.id = "verification-symbol";
+            span.textContent = symbol;
+            return span;
+        }
+
+        function setButton(iconName, label, disabled) {
+            buttonIcon.textContent = iconName;
+            buttonLabel.textContent = label;
+            verifyButton.disabled = disabled;
+        }
+
+        function showMissingToken() {
+            showVerificationState(
+                "error",
+                "Verification link is incomplete",
+                "This link does not contain a verification token. Please use the verification link from your email.",
+                "link_off"
+            );
+
+            setButton("refresh", "Try Again", false);
+        }
+
+        if (!token) {
+            showMissingToken();
+        }
+
         verifyButton.addEventListener("click", async () => {
             if (!token) {
-                message.textContent = "Verification token is missing.";
+                showMissingToken();
                 return;
             }
 
-            verifyButton.disabled = true;
-            verifyButton.textContent = "Verifying...";
-            message.textContent = "";
+            if (verificationStarted) {
+                return;
+            }
+
+            verificationStarted = true;
+
+            setButton("progress_activity", "Verifying...", true);
+
+            showVerificationState(
+                "loading",
+                "Verifying your email",
+                "Please wait while we confirm your email address.",
+                "progress_activity"
+            );
 
             try {
                 const response = await fetch("/api/auth/verify-email", {
@@ -301,30 +495,57 @@
                 const data = await response.json();
 
                 if (!response.ok) {
-                    message.textContent =
-                        data.error || "Email verification failed.";
+                    showVerificationState(
+                        "error",
+                        "Verification unsuccessful",
+                        data.error || data.message ||
+                        "We couldn't verify your email. The link may have expired or already been used.",
+                        "error"
+                    );
 
-                    verifyButton.disabled = false;
-                    verifyButton.textContent = "Verify Email";
+                    setButton("refresh", "Try Again", false);
+                    verificationStarted = false;
                     return;
                 }
 
-                message.textContent =
-                    "Email verified successfully! Redirecting...";
+                showVerificationState(
+                    "success",
+                    "Email verified successfully!",
+                    "Your email address has been confirmed. Taking you to MyCloud...",
+                    "mark_email_read"
+                );
+
+                setButton("check_circle", "Verified", true);
 
                 setTimeout(() => {
                     window.location.href = "/drive";
                 }, 1500);
 
             } catch (error) {
-                message.textContent =
-                    "Unable to verify your email. Please try again.";
+                console.error("Email verification request failed:", error);
 
-                verifyButton.disabled = false;
-                verifyButton.textContent = "Verify Email";
+                showVerificationState(
+                    "error",
+                    "Connection problem",
+                    "We couldn't contact the server. Check your connection and try again.",
+                    "cloud_off"
+                );
+
+                setButton("refresh", "Try Again", false);
+                verificationStarted = false;
             }
         });
 
+        document.getElementById("brand-home").addEventListener("click", () => {
+            window.location.href = "/";
+        });
+
+        // If the verification request failed, allow the user to retry.
+        verifyButton.addEventListener("click", () => {
+            if (!token) {
+                showMissingToken();
+            }
+        });
     </script>
 
 </body>

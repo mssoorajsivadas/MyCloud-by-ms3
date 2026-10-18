@@ -1,295 +1,569 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="en" data-theme="light">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MyCloud</title>
-  <!-- FontAwesome Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f2f6ff">
+    <meta name="description" content="MyCloud by ms3 — a simple cloud drive to upload, organize, preview, and manage your files.">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='assets/images/logo/mycloud-logo.svg') }}">
+    <title>MyCloud — Your files. Your space. Always.</title>
 
+    <style>
+        :root {
+            color-scheme: light;
+            --bg-gradient: linear-gradient(135deg, #c0d4f8 0%, #e3efff 45%, #e8d8ee 100%);
+            --color-primary: #567fff;
+            --color-primary-hover: #3d6fe8;
+            --color-bg-main: #f3f6fc;
+            --color-bg-surface: #ffffff;
+            --color-bg-overlay: #e8edf7;
+            --color-text-primary: #131b35;
+            --color-text-secondary: #465574;
+            --color-text-muted: #71809d;
+            --color-border: #e2e9f5;
+            --color-hover-state: #edf2ff;
+            --color-active: #416fff;
+            --shadow-card: 0 18px 50px rgba(54, 88, 160, .12);
+        }
 
-  <style>
-    /* CSS Variables & Base Setup */
-    :root {
-      --bg-gradient: linear-gradient(135deg, #6B8FD4 0%, #8BA8D9 45%, #A88BB8 100%);
+        [data-theme="dark"] {
+            color-scheme: dark;
+            --bg-gradient: linear-gradient(135deg, #252f49 0%, #292d45 55%, #3a2d49 100%);
+            --color-primary: #7296ff;
+            --color-primary-hover: #8ba7ff;
+            --color-bg-main: #171b27;
+            --color-bg-surface: #222838;
+            --color-bg-overlay: #2d3447;
+            --color-text-primary: #f3f6ff;
+            --color-text-secondary: #c5cee2;
+            --color-text-muted: #9aa7c1;
+            --color-border: #343d52;
+            --color-hover-state: #2c354b;
+            --color-active: #86a3ff;
+            --shadow-card: 0 18px 50px rgba(0, 0, 0, .25);
+        }
 
-      --color-primary: #2867ac;
-      --color-primary-hover: #3D7BD4;
+        @font-face {
+            font-family: "Material Symbols Rounded";
+            src: url("{{ url_for('static', filename='fonts/material-symbols-rounded.woff2') }}") format("woff2");
+            font-weight: 100 700;
+            font-style: normal;
+            font-display: block;
+        }
 
-      --color-bg-main: #242424;
-      --color-bg-surface: #1b1b1b;
-      --color-bg-overlay: #333333;
+        @font-face {
+            font-family: "Roboto";
+            src: url("{{ url_for('static', filename='fonts/Roboto-VariableFont_wdth,wght.ttf') }}") format("truetype");
+            font-weight: 100 900;
+            font-style: normal;
+            font-display: swap;
+        }
 
-      --color-text-primary: #F1F5F9;
-      --color-text-secondary: #CBD5E1;
-      --color-text-muted: #64748B;
+        * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; scroll-padding-top: 90px; }
+        body {
+            margin: 0;
+            background: var(--color-bg-main);
+            color: var(--color-text-primary);
+            font-family: "Roboto", Arial, sans-serif;
+            line-height: 1.55;
+            transition: background .2s ease, color .2s ease;
+        }
+        a { color: inherit; }
+        button { font: inherit; }
+        .material-symbols-rounded {
+            font-family: "Material Symbols Rounded";
+            font-weight: normal;
+            font-style: normal;
+            font-size: 24px;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            display: inline-block;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
+            font-feature-settings: "liga";
+            -webkit-font-smoothing: antialiased;
+            font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+        }
+        .container { width: min(1180px, calc(100% - 48px)); margin-inline: auto; }
+        .site-header {
+            position: sticky; top: 0; z-index: 20;
+            background: color-mix(in srgb, var(--color-bg-surface) 90%, transparent);
+            border-bottom: 1px solid var(--color-border);
+            backdrop-filter: blur(16px);
+        }
+        .nav {
+            min-height: 76px; display: flex; align-items: center;
+            justify-content: space-between; gap: 24px;
+        }
+        .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; flex-shrink: 0; }
+        .brand img { width: 52px; height: 52px; object-fit: contain; }
+        .brand-copy { display: flex; flex-direction: column; line-height: 1.15; }
+        .brand-copy strong { font-size: 21px; letter-spacing: -.6px; }
+        .brand-copy small { color: var(--color-text-muted); font-size: 12px; }
+        .nav-links { display: flex; align-items: center; gap: 30px; }
+        .nav-links a { text-decoration: none; color: var(--color-text-secondary); font-size: 14px; font-weight: 500; }
+        .nav-links a:hover { color: var(--color-active); }
+        .nav-actions { display: flex; align-items: center; gap: 10px; }
+        .theme-toggle, .menu-toggle {
+            border: 0; background: transparent; color: var(--color-text-secondary);
+            border-radius: 50%; width: 42px; height: 42px; display: grid; place-items: center; cursor: pointer;
+        }
+        .theme-toggle:hover, .menu-toggle:hover { background: var(--color-hover-state); }
+        .menu-toggle { display: none; }
+        .button {
+            display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+            min-height: 46px; padding: 0 22px; border-radius: 999px;
+            text-decoration: none; font-size: 14px; font-weight: 600;
+            border: 1px solid transparent; cursor: pointer; transition: transform .18s ease, background .18s ease;
+        }
+        .button:hover { transform: translateY(-2px); }
+        .button-primary { background: var(--color-primary); color: #fff; box-shadow: 0 8px 20px rgba(86,127,255,.2); }
+        .button-primary:hover { background: var(--color-primary-hover); }
+        .button-outline { border-color: #b9ccff; color: var(--color-active); background: transparent; }
+        .button-outline:hover { background: var(--color-hover-state); }
+        .button .material-symbols-rounded { font-size: 19px; }
 
-      --color-border: #343434;
-      --color-hover-state: #353535;
-      --color-active: #2867ac;
-      --color-focus-ring: #5597EB;
+        .hero {
+            position: relative; overflow: hidden;
+            padding: 76px 0 66px;
+            background: radial-gradient(ellipse at 78% 28%, rgba(190, 205, 255, .43), transparent 34%),
+                        radial-gradient(ellipse at 12% 10%, rgba(219, 234, 255, .8), transparent 40%),
+                        var(--color-bg-main);
+        }
+        [data-theme="dark"] .hero {
+            background: radial-gradient(ellipse at 78% 28%, rgba(94, 90, 170, .25), transparent 34%),
+                        radial-gradient(ellipse at 12% 10%, rgba(52, 82, 137, .2), transparent 40%),
+                        var(--color-bg-main);
+        }
+        .hero-grid { display: grid; grid-template-columns: minmax(0, .92fr) minmax(0, 1.08fr); align-items: center; gap: 52px; }
+        .eyebrow {
+            display: inline-flex; align-items: center; gap: 9px; padding: 8px 14px;
+            border-radius: 999px; background: rgba(106, 132, 255, .12);
+            color: var(--color-active); font-size: 13px; font-weight: 600; margin-bottom: 22px;
+        }
+        .eyebrow .material-symbols-rounded { font-size: 19px; }
+        .hero h1 { font-size: clamp(38px, 4.4vw, 61px); line-height: 1.08; letter-spacing: -2.2px; margin: 0 0 22px; max-width: 620px; }
+        .gradient-text {
+            background: linear-gradient(100deg, #2677ee 5%, #6659f5 60%, #9b52e8 100%);
+            -webkit-background-clip: text; background-clip: text; color: transparent;
+        }
+        .hero-copy { max-width: 500px; color: var(--color-text-secondary); font-size: 17px; margin: 0 0 27px; }
+        .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+        .trust-note { display: flex; align-items: center; gap: 9px; color: var(--color-text-muted); font-size: 12px; margin-top: 20px; }
+        .trust-note .material-symbols-rounded { font-size: 18px; color: #20a779; }
 
-      --color-success: #34d399;
-      --color-warning: #fbbf24;
-      --color-danger: #f87171;
-      --color-info: #60a5fa;
-    }
+        /* CSS-only product preview: no external images or services required. */
+        .preview-wrap { position: relative; min-width: 0; padding: 18px 0 20px 12px; }
+        .preview-glow { position: absolute; width: 75%; aspect-ratio: 1; border-radius: 50%; background: linear-gradient(135deg, rgba(108,133,255,.18), rgba(177,116,241,.14)); top: 2%; left: 13%; filter: blur(1px); }
+        .drive-window {
+            position: relative; z-index: 1; overflow: hidden; border: 1px solid rgba(185,204,255,.85);
+            border-radius: 19px; background: var(--color-bg-surface); box-shadow: 0 28px 70px rgba(66, 102, 188, .19);
+            transform: perspective(1200px) rotateY(-2deg);
+        }
+        .window-top { height: 38px; display: flex; align-items: center; gap: 6px; padding: 0 15px; background: var(--color-bg-overlay); border-bottom: 1px solid var(--color-border); }
+        .window-dot { width: 9px; height: 9px; border-radius: 50%; background: #ff777b; }
+        .window-dot:nth-child(2) { background: #ffc65b; }
+        .window-dot:nth-child(3) { background: #51cda5; }
+        .drive-ui { display: grid; grid-template-columns: 145px minmax(0, 1fr); min-height: 350px; }
+        .drive-sidebar { padding: 17px 10px; border-right: 1px solid var(--color-border); }
+        .mini-brand { display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 700; padding: 0 7px 17px; }
+        .mini-brand .material-symbols-rounded { color: var(--color-primary); font-size: 23px; }
+        .side-item { display: flex; align-items: center; gap: 9px; padding: 9px 8px; border-radius: 8px; font-size: 11px; color: var(--color-text-secondary); margin-bottom: 3px; }
+        .side-item .material-symbols-rounded { font-size: 17px; }
+        .side-item.active { color: var(--color-active); background: rgba(86,127,255,.12); }
+        .drive-content { min-width: 0; padding: 19px 18px; }
+        .drive-content-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 15px; }
+        .drive-content-head strong { font-size: 15px; }
+        .fake-avatar { width: 25px; height: 25px; display: grid; place-items: center; border-radius: 50%; background: rgba(86,127,255,.16); color: var(--color-active); }
+        .search-bar { display: flex; align-items: center; gap: 7px; background: var(--color-bg-main); border: 1px solid var(--color-border); color: var(--color-text-muted); padding: 9px 10px; border-radius: 8px; font-size: 10px; margin-bottom: 12px; }
+        .search-bar .material-symbols-rounded { font-size: 15px; }
+        .file-row { display: grid; grid-template-columns: 27px minmax(0,1fr) auto; gap: 9px; align-items: center; padding: 11px 3px; border-bottom: 1px solid var(--color-border); }
+        .file-icon { width: 25px; height: 25px; border-radius: 6px; display: grid; place-items: center; background: #fff0c9; color: #d69a19; }
+        .file-icon .material-symbols-rounded { font-size: 18px; }
+        .file-icon.doc { background: #e0edff; color: #3981ed; }
+        .file-icon.pdf { background: #ffe4e4; color: #e34d55; }
+        .file-icon.note { background: #e6e8f2; color: #68738d; }
+        .file-name { font-size: 11px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .file-meta { font-size: 9px; color: var(--color-text-muted); }
+        .file-more { color: var(--color-text-muted); font-size: 18px; }
+        .floating-status {
+            position: absolute; z-index: 2; right: -6px; bottom: -2px; display: flex; align-items: center; gap: 12px;
+            background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: 15px;
+            padding: 13px 17px; box-shadow: var(--shadow-card); font-size: 11px; color: var(--color-text-secondary);
+        }
+        .status-icon { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 11px; background: rgba(86,127,255,.13); color: var(--color-primary); }
+        .status-icon .material-symbols-rounded { font-size: 24px; }
+        .status-dot { width: 7px; height: 7px; border-radius: 50%; background: #2ebd89; }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+        .quick-features { padding: 28px 0; border-top: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border); background: var(--color-bg-surface); }
+        .quick-grid { display: grid; grid-template-columns: repeat(4, 1fr); }
+        .quick-item { display: flex; align-items: center; gap: 14px; padding: 8px 22px; border-right: 1px solid var(--color-border); }
+        .quick-item:first-child { padding-left: 0; }
+        .quick-item:last-child { border-right: 0; }
+        .quick-icon { width: 49px; height: 49px; flex: 0 0 49px; display: grid; place-items: center; border-radius: 16px; background: rgba(86,127,255,.12); color: var(--color-primary); }
+        .quick-icon .material-symbols-rounded { font-size: 25px; }
+        .quick-item strong { display: block; font-size: 13px; margin-bottom: 3px; }
+        .quick-item p { color: var(--color-text-muted); font-size: 11px; margin: 0; }
 
-    body {
-      background: var(--bg-gradient);
-      color: var(--color-text-primary);
-      font-family: Arial, Helvetica, sans-serif;
-      line-height: 1.6;
-      overflow: hidden;
-    }
+        .section { padding: 86px 0; }
+        .section-heading { text-align: center; max-width: 650px; margin: 0 auto 42px; }
+        .section-kicker { color: var(--color-active); text-transform: uppercase; font-size: 12px; letter-spacing: 1.5px; font-weight: 700; }
+        .section-heading h2 { font-size: clamp(28px, 3.2vw, 39px); letter-spacing: -1.1px; line-height: 1.2; margin: 10px 0 12px; }
+        .section-heading p { margin: 0; color: var(--color-text-secondary); }
+        .feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+        .feature-card {
+            background: var(--color-bg-surface); border: 1px solid var(--color-border);
+            border-radius: 18px; padding: 25px; box-shadow: 0 8px 24px rgba(38, 57, 100, .035);
+        }
+        .feature-card:hover { border-color: rgba(86,127,255,.5); transform: translateY(-3px); transition: .2s ease; }
+        .feature-card .quick-icon { margin-bottom: 18px; }
+        .feature-card h3 { font-size: 17px; margin: 0 0 8px; }
+        .feature-card p { color: var(--color-text-secondary); font-size: 14px; margin: 0; }
+        .about-panel {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center;
+            padding: 38px; border: 1px solid var(--color-border); border-radius: 24px;
+            background: linear-gradient(125deg, rgba(86,127,255,.10), rgba(169,112,230,.08)), var(--color-bg-surface);
+        }
+        .about-panel h2 { font-size: clamp(27px, 3vw, 36px); line-height: 1.2; letter-spacing: -1px; margin: 9px 0 14px; }
+        .about-panel p { color: var(--color-text-secondary); margin: 0 0 17px; }
+        .about-list { display: grid; gap: 12px; }
+        .about-list div { display: flex; align-items: flex-start; gap: 10px; color: var(--color-text-secondary); font-size: 14px; }
+        .about-list .material-symbols-rounded { color: #21a77a; font-size: 20px; }
+        .project-card { padding: 24px; border: 1px solid var(--color-border); border-radius: 17px; background: var(--color-bg-surface); }
+        .project-top { display: flex; align-items: center; gap: 12px; margin-bottom: 15px; }
+        .github-mark { width: 47px; height: 47px; border-radius: 14px; display: grid; place-items: center; background: var(--color-bg-overlay); }
+        .github-mark .material-symbols-rounded { font-size: 27px; }
+        .project-top strong { display: block; font-size: 15px; }
+        .project-top small { color: var(--color-text-muted); }
+        .project-card p { font-size: 13px; color: var(--color-text-secondary); margin: 0 0 18px; }
+        .project-link { display: inline-flex; gap: 7px; align-items: center; color: var(--color-active); text-decoration: none; font-size: 13px; font-weight: 700; }
+        .project-link:hover { text-decoration: underline; }
 
-    a {
-      color: inherit;
-      text-decoration: none;
-    }
+        .cta { padding: 0 0 80px; }
+        .cta-inner {
+            display: flex; align-items: center; justify-content: space-between; gap: 28px;
+            padding: 36px 40px; border-radius: 22px; color: #fff;
+            background: linear-gradient(110deg, #386ff1, #7656e8);
+            box-shadow: 0 18px 40px rgba(76, 93, 220, .22);
+        }
+        .cta-inner h2 { margin: 0 0 6px; font-size: clamp(23px, 3vw, 32px); letter-spacing: -.7px; }
+        .cta-inner p { margin: 0; color: rgba(255,255,255,.84); font-size: 14px; }
+        .cta-inner .button { background: #fff; color: #315fe0; flex-shrink: 0; }
 
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 20px;
-    }
+        .site-footer { background: #202a40; color: #f4f6ff; padding: 32px 0; }
+        .footer-inner { display: grid; grid-template-columns: 1.1fr 1.3fr 1fr 1fr; gap: 26px; align-items: center; }
+        .footer-brand .brand-copy small { color: #bdc8df; }
+        .footer-links { display: flex; flex-wrap: wrap; gap: 18px; }
+        .footer-links a { color: #d5def2; font-size: 12px; text-decoration: none; }
+        .footer-links a:hover { color: #fff; }
+        .footer-github { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+        .footer-github .material-symbols-rounded { font-size: 28px; }
+        .footer-github strong { display: block; font-size: 12px; }
+        .footer-github small { display: block; color: #bdc8df; font-size: 11px; overflow-wrap: anywhere; }
+        .project-credit { border-left: 1px solid #526078; padding-left: 24px; }
+        .project-credit strong { display: block; font-size: 12px; }
+        .project-credit p { margin: 4px 0 0; color: #bdc8df; font-size: 11px; }
+        .heart { color: #ff777e; }
 
-    /* 1. Header Navigation */
-    .header {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      backdrop-filter: blur(12px);
-    }
-
-    .nav-container {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      height: 70px;
-    }
-
-    .logo {
-      display: flex;
-      align-items: end;
-      gap: 1px;
-    }
-
-    .logo h1 {
-      font-size: 25px;
-    }
-
-    .logo p {
-      font-size: 15px;
-    }
-
-    .nav-actions a {
-      font-size: 15px;
-    }
-
-    .btn {
-      padding: 10px 20px;
-      border-radius: 50px;
-      font-weight: 400;
-      cursor: pointer;
-      transition: all 0.2s;
-      border: none;
-    }
-
-    .btn-secondary {
-      background: transparent;
-    }
-
-    .btn-primary {
-      background: var(--color-primary);
-      color: var(--color-text-primary);
-    }
-
-    .btn-primary:hover {
-      background: var(--color-primary-hover);
-      color: #ffffff;
-    }
-
-    /* 2. Hero Section */
-    .hero {
-      padding: 100px 0 60px;
-      text-align: center;
-    }
-
-    .hero-badge {
-      display: inline-block;
-      padding: 6px 16px;
-      background: var(--color-primary-hover);
-      border-radius: 20px;
-      font-size: 0.875rem;
-      border: none;
-      margin-bottom: 20px;
-    }
-
-    .hero h1 {
-      font-size: 2.2rem;
-      font-weight: 800;
-      line-height: 1.2;
-      margin-bottom: 20px;
-    }
-
-    .hero p {
-      font-size: 1rem;
-      color: var(--text-muted);
-      max-width: 650px;
-      margin: 0 auto 32px;
-    }
-
-    .gitbutton button {
-      font-size: 15px;
-      color: #ffffff;
-      background: var(--color-primary);
-      border: none;
-      border-radius: 50px;
-      padding: 10px 20px;
-      cursor: pointer;
-    }
-
-    .gitbutton button:hover {
-      background: var(--color-primary-hover);
-    }
-
-    /* 4. Footer */
-    .footer {
-      padding: 60px 0 30px;
-    }
-
-    .footer-grid {
-      display: grid;
-      grid-template-columns: 2fr repeat(3, 1fr);
-      gap: 40px;
-      margin-bottom: 40px;
-    }
-
-    .footer-brand p {
-      color: var(--text-muted);
-      margin-top: 12px;
-      font-size: 0.9rem;
-      max-width: 280px;
-    }
-
-    .footer-column h4 {
-      margin-bottom: 16px;
-      font-size: 1rem;
-    }
-
-    .footer-column ul {
-      list-style: none;
-    }
-
-    .footer-column li {
-      margin-bottom: 10px;
-    }
-
-    .footer-column a {
-      color: var(--text-muted);
-      font-size: 0.9rem;
-      transition: color 0.2s;
-    }
-
-    .footer-column a:hover {
-      color: var(--text-main);
-    }
-
-    .footer-bottom {
-      border-top: 1px solid var(--border-color);
-      padding-top: 24px;
-      text-align: center;
-      color: var(--text-muted);
-      font-size: 0.85rem;
-    }
-  </style>
+        @media (max-width: 1000px) {
+            .nav-links { gap: 18px; }
+            .hero-grid { gap: 28px; }
+            .drive-ui { grid-template-columns: 118px minmax(0, 1fr); }
+            .quick-item { padding-inline: 13px; }
+            .quick-item p { font-size: 10px; }
+            .footer-inner { grid-template-columns: 1fr 1.3fr; }
+            .project-credit { border-left: 0; padding-left: 0; }
+        }
+        @media (max-width: 760px) {
+            .container { width: min(100% - 32px, 560px); }
+            .nav { min-height: 68px; gap: 12px; }
+            .brand img { width: 43px; height: 43px; }
+            .brand-copy strong { font-size: 19px; }
+            .menu-toggle { display: grid; }
+            .nav-links {
+                display: none; position: absolute; top: 68px; left: 16px; right: 16px;
+                flex-direction: column; align-items: stretch; gap: 0; padding: 10px;
+                background: var(--color-bg-surface); border: 1px solid var(--color-border);
+                border-radius: 14px; box-shadow: var(--shadow-card);
+            }
+            .nav-links.open { display: flex; }
+            .nav-links a { padding: 12px; border-radius: 8px; }
+            .nav-links a:hover { background: var(--color-hover-state); }
+            .nav-actions { gap: 4px; }
+            .nav-actions .button { min-height: 39px; padding: 0 13px; font-size: 12px; }
+            .hero { padding: 53px 0 45px; }
+            .hero-grid { grid-template-columns: 1fr; gap: 25px; }
+            .hero h1 { letter-spacing: -1.5px; }
+            .hero-copy { font-size: 15px; }
+            .preview-wrap { padding: 8px 0 20px; }
+            .drive-window { transform: none; }
+            .drive-ui { min-height: 310px; grid-template-columns: 105px minmax(0,1fr); }
+            .drive-content { padding: 15px 11px; }
+            .drive-sidebar { padding-inline: 7px; }
+            .side-item { gap: 5px; font-size: 10px; }
+            .floating-status { right: 0; bottom: -4px; padding: 9px 12px; }
+            .quick-grid { grid-template-columns: 1fr 1fr; row-gap: 18px; }
+            .quick-item { padding: 5px 10px; border-right: 0; }
+            .quick-item:first-child { padding-left: 10px; }
+            .section { padding: 63px 0; }
+            .feature-grid { grid-template-columns: 1fr 1fr; }
+            .about-panel { grid-template-columns: 1fr; padding: 25px; gap: 25px; }
+            .cta-inner { align-items: flex-start; flex-direction: column; padding: 28px; }
+            .footer-inner { grid-template-columns: 1fr 1fr; gap: 25px 16px; }
+            .footer-links { gap: 12px; }
+        }
+        @media (max-width: 460px) {
+            .brand { gap: 6px; }
+            .brand img { width: 36px; height: 36px; }
+            .brand-copy strong { font-size: 17px; }
+            .brand-copy small { font-size: 10px; }
+            .theme-toggle { width: 34px; height: 38px; }
+            .nav-actions .button-outline { display: none; }
+            .hero h1 { font-size: 38px; }
+            .hero-actions .button { flex: 1; padding-inline: 14px; }
+            .drive-ui { grid-template-columns: 78px minmax(0,1fr); }
+            .mini-brand { padding-inline: 3px; font-size: 10px; }
+            .mini-brand .material-symbols-rounded { font-size: 17px; }
+            .side-item { justify-content: center; padding: 9px 3px; font-size: 0; }
+            .side-item .material-symbols-rounded { font-size: 19px; }
+            .file-row { grid-template-columns: 24px minmax(0,1fr) auto; gap: 6px; }
+            .file-meta { display: none; }
+            .file-name { font-size: 10px; }
+            .feature-grid { grid-template-columns: 1fr; }
+            .quick-item { align-items: flex-start; gap: 9px; padding-inline: 0; }
+            .quick-item:first-child { padding-left: 0; }
+            .quick-icon { width: 39px; height: 39px; flex-basis: 39px; border-radius: 13px; }
+            .quick-icon .material-symbols-rounded { font-size: 21px; }
+            .quick-item strong { font-size: 12px; }
+            .quick-item p { font-size: 10px; }
+            .footer-inner { grid-template-columns: 1fr; }
+            .project-credit { border-top: 1px solid #526078; padding-top: 17px; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            html { scroll-behavior: auto; }
+            *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+        }
+    </style>
 </head>
-
 <body>
+    <header class="site-header">
+        <nav class="nav container" aria-label="Main navigation">
+            <a class="brand" href="#home" aria-label="MyCloud home">
+                <img src="{{ url_for('static', filename='assets/images/logo/mycloud-logo-v1.svg') }}" alt="MyCloud logo">
+                <span class="brand-copy"><strong>MyCloud</strong><small>by ms3</small></span>
+            </a>
 
-  <!-- 1. HEADER SECTION -->
-  <header class="header">
-    <div class="container nav-container">
-      <div class="logo">
-        <h1>MyCloud</h1>
-        <p>by ms3</p>
-      </div>
-      <div class="nav-actions">
-        <a href="/signin" class="btn btn-secondary">Sign In</a>
-        <a href="/signup" class="btn btn-primary">Get Started</a>
-      </div>
-    </div>
-  </header>
+            <button class="menu-toggle" id="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">
+                <span class="material-symbols-rounded">menu</span>
+            </button>
 
-  <!-- 2. HERO SECTION -->
-  <section class="hero container">
-    <span class="hero-badge">A friendly user interface & Cloud-Native</span>
-    <h1> Welcome to MyCloud by ms3</h1>
-    <p>Build your own cloud using MyCloud by ms3 project. what you can do create folder, upload you files, copy, move,
-      delete with total infrastructure freedom. </p>
-    <div class="gitbutton">
-      <button href="https://github.com"><i class="fa-brands fa-github mr-2"></i> GitHub</button>
-    </div>
+            <div class="nav-links" id="nav-links">
+                <a href="#home">Home</a>
+                <a href="#features">Features</a>
+                <a href="#about">About</a>
+                <a href="#project">Project</a>
+            </div>
 
+            <div class="nav-actions">
+                <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch to dark theme" title="Toggle theme">
+                    <span class="material-symbols-rounded" id="theme-icon">dark_mode</span>
+                </button>
+                <a class="button button-outline" href="/signin">Sign in</a>
+                <a class="button button-primary" href="/signup">Create account</a>
+            </div>
+        </nav>
+    </header>
 
-  </section>
+    <main>
+        <section class="hero" id="home">
+            <div class="container hero-grid">
+                <div class="hero-content">
+                    <div class="eyebrow"><span class="material-symbols-rounded">cloud</span> Your files. Your space. Always.</div>
+                    <h1>Store, access and share your files <span class="gradient-text">anywhere, anytime.</span></h1>
+                    <p class="hero-copy">MyCloud is a simple cloud-drive project designed to help you upload, organize, find, preview and manage your files in one place.</p>
+                    <div class="hero-actions">
+                        <a class="button button-primary" href="/signup">Get started <span class="material-symbols-rounded">arrow_forward</span></a>
+                        <a class="button button-outline" href="#features">Explore features <span class="material-symbols-rounded">play_arrow</span></a>
+                    </div>
+                    <div class="trust-note"><span class="material-symbols-rounded">check_circle</span> Built step by step with Flask and web technologies.</div>
+                </div>
 
+                <div class="preview-wrap" aria-label="Illustration of the MyCloud file manager">
+                    <div class="preview-glow"></div>
+                    <div class="drive-window">
+                        <div class="window-top"><span class="window-dot"></span><span class="window-dot"></span><span class="window-dot"></span></div>
+                        <div class="drive-ui">
+                            <aside class="drive-sidebar">
+                                <div class="mini-brand"><span class="material-symbols-rounded">cloud</span> MyCloud</div>
+                                <div class="side-item active"><span class="material-symbols-rounded">home</span> Home</div>
+                                <div class="side-item"><span class="material-symbols-rounded">folder</span> My Files</div>
+                                <div class="side-item"><span class="material-symbols-rounded">schedule</span> Recent</div>
+                                <div class="side-item"><span class="material-symbols-rounded">image</span> Preview</div>
+                                <div class="side-item"><span class="material-symbols-rounded">settings</span> Settings</div>
+                            </aside>
+                            <div class="drive-content">
+                                <div class="drive-content-head"><strong>My Files</strong><span class="fake-avatar"><span class="material-symbols-rounded" style="font-size:17px">person</span></span></div>
+                                <div class="search-bar"><span class="material-symbols-rounded">search</span> Search files and folders...</div>
+                                <div class="file-row"><span class="file-icon"><span class="material-symbols-rounded">folder</span></span><div><div class="file-name">Documents</div><div class="file-meta">Folder · Updated recently</div></div><span class="file-more">⋮</span></div>
+                                <div class="file-row"><span class="file-icon"><span class="material-symbols-rounded">folder</span></span><div><div class="file-name">Photos</div><div class="file-meta">Folder · Updated recently</div></div><span class="file-more">⋮</span></div>
+                                <div class="file-row"><span class="file-icon doc"><span class="material-symbols-rounded">image</span></span><div><div class="file-name">Design-preview.jpg</div><div class="file-meta">Image · Preview available</div></div><span class="file-more">⋮</span></div>
+                                <div class="file-row"><span class="file-icon pdf"><span class="material-symbols-rounded">picture_as_pdf</span></span><div><div class="file-name">Project-report.pdf</div><div class="file-meta">Document · Stored in your drive</div></div><span class="file-more">⋮</span></div>
+                                <div class="file-row"><span class="file-icon note"><span class="material-symbols-rounded">description</span></span><div><div class="file-name">Notes.txt</div><div class="file-meta">Text file · Stored in your drive</div></div><span class="file-more">⋮</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="floating-status">
+                        <span class="status-icon"><span class="material-symbols-rounded">cloud_done</span></span>
+                        <span>Organized <b>·</b> Accessible <b>·</b> Yours</span><span class="status-dot"></span>
+                    </div>
+                </div>
+            </div>
+        </section>
 
+        <section class="quick-features" aria-label="Feature highlights">
+            <div class="container quick-grid">
+                <div class="quick-item"><span class="quick-icon"><span class="material-symbols-rounded">devices</span></span><div><strong>Access your files</strong><p>Use your drive through a web browser.</p></div></div>
+                <div class="quick-item"><span class="quick-icon"><span class="material-symbols-rounded">visibility</span></span><div><strong>Preview files</strong><p>View supported files before downloading.</p></div></div>
+                <div class="quick-item"><span class="quick-icon"><span class="material-symbols-rounded">folder_open</span></span><div><strong>Manage folders</strong><p>Keep files arranged your way.</p></div></div>
+                <div class="quick-item"><span class="quick-icon"><span class="material-symbols-rounded">manage_accounts</span></span><div><strong>Account controls</strong><p>Manage your account and settings.</p></div></div>
+            </div>
+        </section>
 
-  <!-- 4. FOOTER SECTION -->
-  <footer class="footer">
-    <div class="container">
-      <div class="footer-grid">
-        <div class="footer-brand">
-          <div class="logo">
-            <h1>MyCloud</h1>
-            <p>by ms3</p>
-          </div>
-          <p>A open-source cloud drive project built for privacy, high-speed file sync, and total
-            infrastructure freedom.</p>
+        <section class="section" id="features">
+            <div class="container">
+                <div class="section-heading">
+                    <span class="section-kicker">What you can do</span>
+                    <h2>Your files, organized your way.</h2>
+                    <p>Useful file-management tools in a clean interface, with more features added as the project grows.</p>
+                </div>
+                <div class="feature-grid">
+                    <article class="feature-card"><span class="quick-icon"><span class="material-symbols-rounded">cloud_upload</span></span><h3>Upload and download</h3><p>Upload files to your drive and download them whenever you need them.</p></article>
+                    <article class="feature-card"><span class="quick-icon"><span class="material-symbols-rounded">create_new_folder</span></span><h3>Folders and subfolders</h3><p>Create folders and organize content in a nested folder structure.</p></article>
+                    <article class="feature-card"><span class="quick-icon"><span class="material-symbols-rounded">drive_file_rename_outline</span></span><h3>Rename, copy and move</h3><p>Manage folders with rename, copy and move actions while keeping your structure organized.</p></article>
+                    <article class="feature-card"><span class="quick-icon"><span class="material-symbols-rounded">search</span></span><h3>Find files faster</h3><p>Use your file-management interface to locate and navigate through stored content.</p></article>
+                    <article class="feature-card"><span class="quick-icon"><span class="material-symbols-rounded">image</span></span><h3>File previews and thumbnails</h3><p>Preview supported content and use thumbnails where available, without downloading every file first.</p></article>
+                    <article class="feature-card"><span class="quick-icon"><span class="material-symbols-rounded">shield_lock</span></span><h3>Account and session controls</h3><p>Sign up, sign in and sign out, with server-side session checks for account-specific access.</p></article>
+                    <article class="feature-card"><span class="quick-icon"><span class="material-symbols-rounded">password</span></span><h3>Password and account management</h3><p>Manage your password and request account deletion from the account controls.</p></article>
+                    <article class="feature-card"><span class="quick-icon"><span class="material-symbols-rounded">dark_mode</span></span><h3>Light and dark themes</h3><p>Switch between light and dark appearance for a more comfortable interface.</p></article>
+                    <article class="feature-card"><span class="quick-icon"><span class="material-symbols-rounded">devices</span></span><h3>Responsive interface</h3><p>Use a layout designed to adapt to desktop, tablet and mobile screen sizes.</p></article>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="about" style="padding-top: 0;">
+            <div class="container">
+                <div class="about-panel">
+                    <div>
+                        <span class="section-kicker">About MyCloud</span>
+                        <h2>A cloud-drive project built to learn by building.</h2>
+                        <p>MyCloud is an ongoing personal project focused on building a practical file-management application while learning backend development, frontend design, databases and web security.</p>
+                        <a class="button button-outline" href="#project">Explore the project <span class="material-symbols-rounded">arrow_forward</span></a>
+                    </div>
+                    <div class="about-list">
+                        <div><span class="material-symbols-rounded">check_circle</span><span>Flask-powered backend and API endpoints.</span></div>
+                        <div><span class="material-symbols-rounded">check_circle</span><span>Database-backed users, folders and file metadata.</span></div>
+                        <div><span class="material-symbols-rounded">check_circle</span><span>Separate account sessions and user-specific file access.</span></div>
+                        <div><span class="material-symbols-rounded">check_circle</span><span>Iterative development, with new improvements planned over time.</span></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="project" style="padding-top: 0;">
+            <div class="container">
+                <div class="section-heading">
+                    <span class="section-kicker">Built by ms3</span>
+                    <h2>Follow the project on GitHub.</h2>
+                    <p>Explore the source code, follow development, and see how MyCloud evolves.</p>
+                </div>
+                <div class="project-card" style="max-width: 680px; margin: 0 auto;">
+                    <div class="project-top">
+                        <span class="github-mark"><span class="material-symbols-rounded">code</span></span>
+                        <div><strong>MyCloud — Cloud Drive</strong><small>Personal project · Flask · HTML · CSS · JavaScript</small></div>
+                    </div>
+                    <p>A learning-focused cloud-drive application with file uploads and downloads, folder management, user accounts, and a responsive interface.</p>
+                    <!-- Replace YOUR_USERNAME and YOUR_REPOSITORY with your real GitHub details. -->
+                    <a class="project-link" href="https://github.com/mssoorajsivadas/MyCloud-by-ms3" target="_blank" rel="noopener noreferrer">
+                        <span class="material-symbols-rounded">open_in_new</span> View source on GitHub
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <section class="cta">
+            <div class="container">
+                <div class="cta-inner">
+                    <div><h2>Ready to organize your files?</h2><p>Create an account and explore the MyCloud drive.</p></div>
+                    <a class="button" href="/signup">Create your account <span class="material-symbols-rounded">arrow_forward</span></a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container footer-inner">
+            <a class="brand footer-brand" href="#home">
+                <img src="{{ url_for('static', filename='assets/images/logo/mycloud-logo-v1.svg') }}" alt="MyCloud logo">
+                <span class="brand-copy"><strong>MyCloud</strong><small>by ms3</small></span>
+            </a>
+            <div class="footer-links">
+                <a href="#home">Home</a><a href="#features">Features</a><a href="#about">About</a><a href="#project">Project</a>
+            </div>
+            <a class="footer-github" href="https://github.com/mssoorajsivadas" target="_blank" rel="noopener noreferrer">
+                <span class="material-symbols-rounded">code</span>
+                <span><strong>GitHub profile</strong><small>github.com/mssoorajsivadas</small></span>
+            </a>
+            <div class="project-credit"><strong>Project by ms3</strong><p>A cloud-drive project built with Flask and <span class="heart">♥</span></p></div>
         </div>
-        <div class="footer-column">
-          <h4>Product</h4>
-          <ul>
-            <li><a href="#">Features</a></li>
-            <li><a href="#">Pricing</a></li>
-            <li><a href="#">API Access</a></li>
-            <li><a href="#">System Status</a></li>
-          </ul>
-        </div>
-        <div class="footer-column">
-          <h4>Resources</h4>
-          <ul>
-            <li><a href="#">Documentation</a></li>
-            <li><a href="#">Guides</a></li>
-            <li><a href="#">GitHub Repo</a></li>
-            <li><a href="#">Community</a></li>
-          </ul>
-        </div>
-        <div class="footer-column">
-          <h4>Legal & Security</h4>
-          <ul>
-            <li><a href="#">Privacy Policy</a></li>
-            <li><a href="#">Terms of Service</a></li>
-            <li><a href="#">Security Overview</a></li>
-            <li><a href="#">Compliance</a></li>
-          </ul>
-        </div>
-      </div>
-      <div class="footer-bottom">
-        <p>&copy; 2026 Mycloud by ms3. All rights reserved.</p>
-      </div>
-    </div>
-  </footer>
+    </footer>
 
+    <script>
+        const root = document.documentElement;
+        const themeToggle = document.querySelector("#theme-toggle");
+        const themeIcon = document.querySelector("#theme-icon");
+        const menuToggle = document.querySelector("#menu-toggle");
+        const navLinks = document.querySelector("#nav-links");
+
+        function applyTheme(theme) {
+            root.dataset.theme = theme;
+            const dark = theme === "dark";
+            themeIcon.textContent = dark ? "light_mode" : "dark_mode";
+            themeToggle.setAttribute("aria-label", dark ? "Switch to light theme" : "Switch to dark theme");
+            try {
+                localStorage.setItem("mycloud-landing-theme", theme);
+            } catch (error) {
+                // The page still works if browser storage is unavailable.
+            }
+        }
+
+        let savedTheme = "light";
+        try {
+            savedTheme = localStorage.getItem("mycloud-landing-theme") || "light";
+        } catch (error) {}
+        applyTheme(savedTheme === "dark" ? "dark" : "light");
+
+        themeToggle.addEventListener("click", () => {
+            applyTheme(root.dataset.theme === "dark" ? "light" : "dark");
+        });
+
+        menuToggle.addEventListener("click", () => {
+            const isOpen = navLinks.classList.toggle("open");
+            menuToggle.setAttribute("aria-expanded", String(isOpen));
+            menuToggle.setAttribute("aria-label", isOpen ? "Close navigation" : "Open navigation");
+            menuToggle.querySelector(".material-symbols-rounded").textContent = isOpen ? "close" : "menu";
+        });
+
+        navLinks.querySelectorAll("a").forEach((link) => {
+            link.addEventListener("click", () => {
+                navLinks.classList.remove("open");
+                menuToggle.setAttribute("aria-expanded", "false");
+                menuToggle.setAttribute("aria-label", "Open navigation");
+                menuToggle.querySelector(".material-symbols-rounded").textContent = "menu";
+            });
+        });
+    </script>
 </body>
-
 </html>

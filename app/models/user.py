@@ -1,11 +1,9 @@
 from app.extensions import db
 
 
-'''
-#============================#
-        Users Tables
-#============================#
-'''
+
+### Users Tables ###
+
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
