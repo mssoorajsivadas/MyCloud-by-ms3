@@ -23,7 +23,7 @@ Build your own cloud using MyCloud by ms3 project. A modern, high-performance, a
   - Fast thumbnail generation and streaming media playback.
   - Deduplication to optimize storage utilization.
  
--  **Other Features**
+- ✨ **Other Features**
   - Light and dark theme support.
   - A friendly interface.
   - Multiple File and Folder Upload.
