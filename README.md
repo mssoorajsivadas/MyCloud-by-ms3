@@ -4,7 +4,6 @@ Build your own cloud using MyCloud by ms3 project. what you can do with MyCloud 
 delete with total infrastructure freedom.
 
 
-![image](https://github.com/mssoorajsivadas/MyCloud-by-ms3/blob/224d441599f93db3938df68ab53f2297f655c96d/app.jpg)
 
 
 ## Current Features
