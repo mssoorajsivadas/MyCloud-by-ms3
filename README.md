@@ -1,6 +1,4 @@
-# MyCloud by ms3 v2.0.0
-
-![App Icon](https://github.com/mssoorajsivadas/MyCloud-by-ms3/blob/61eb2fbf9a4bac51db41cc0edc9a78adba642bd9/app/static/assets/images/logo/mycloud-logo-v1.svg)
+# MyCloud by ms3 v2.0.0 ![App Icon](https://github.com/mssoorajsivadas/MyCloud-by-ms3/blob/61eb2fbf9a4bac51db41cc0edc9a78adba642bd9/app/static/assets/images/logo/mycloud-logo-v1.svg)
 
 Build your own cloud using MyCloud by ms3 project. A modern, high-performance, and secure cloud storage and file management system designed for seamless synchronization, sharing, and real-time collaboration.
 
@@ -25,14 +23,14 @@ Build your own cloud using MyCloud by ms3 project. A modern, high-performance, a
   - Deduplication to optimize storage utilization.
  
 -  **Other Features**
-- Light and dark theme support.
-- A friendly interface.
-- Multiple File and Folder Upload.
-- Storage analyzer.
-- Gallery interface similar to pinterest layout (Masonry layout).
-- Thumbnail support for many images type and videos types including pdf thumbnail.
-- Supported preview are images, videos, pdf and other documents.
-- Icon support all known format.  
+  - Light and dark theme support.
+  - A friendly interface.
+  - Multiple File and Folder Upload.
+  - Storage analyzer.
+  - Gallery interface similar to pinterest layout (Masonry layout).
+  - Thumbnail support for many images type and videos types including pdf thumbnail.
+  - Supported preview are images, videos, pdf and other documents.
+  - Icon support all known format.  
  
 ---
 ## 🛠️ Architecture & Tech Stack
