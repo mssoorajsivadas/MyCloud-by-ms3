@@ -1,6 +1,6 @@
-# MyCloud by ms3 v2.0.0 
-############![App Icon](https://github.com/mssoorajsivadas/MyCloud-by-ms3/blob/61eb2fbf9a4bac51db41cc0edc9a78adba642bd9/app/static/assets/images/logo/mycloud-logo-v1.svg)
+![App Icon](https://github.com/mssoorajsivadas/MyCloud-by-ms3/blob/61eb2fbf9a4bac51db41cc0edc9a78adba642bd9/app/static/assets/images/logo/mycloud-logo-v1.svg)
 
+# MyCloud by ms3 v2.0.0 
 Build your own cloud using MyCloud by ms3 project. A modern, high-performance, and secure cloud storage and file management system designed for seamless synchronization, sharing, and real-time collaboration.
 
 ![Image](https://github.com/mssoorajsivadas/MyCloud-by-ms3/blob/17d8aa8935d8e9af98a6c8566668a922d753bb21/app.jpg)
